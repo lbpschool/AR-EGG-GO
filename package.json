@@ -1,11 +1,10 @@
 ﻿{
-  "name": "game-gas-project",
+  "name": "sec-game-ar",
   "version": "1.0.0",
-  "description": "Google Apps Script project linked with Google Sheet",
+  "description": "AR Salted Egg Challenge - Educational Game",
   "scripts": {
-    "push": "clasp push",
-    "pull": "clasp pull",
-    "status": "clasp status",
-    "open": "clasp open"
+    "git:push": "git add . && git commit -m \"Update game\" && git push",
+    "gas:push": "clasp push",
+    "push:all": "npm run git:push && npm run gas:push"
   }
 }

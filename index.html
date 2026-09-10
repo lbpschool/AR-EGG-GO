@@ -14,6 +14,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google MediaPipe Hands & Camera Utils for Webcam Hand Tracking -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
   <style>
     :root {
@@ -527,7 +530,17 @@
 </head>
 <body>
   <!-- Real Camera Feed for AR -->
-  <video id="camera-feed" autoplay playsinline muted style="position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none;pointer-events:none;"></video>
+  <!-- Real Camera Feed for AR (Mirrored for Laptop Webcam with Semi-transparent Background) -->
+  <video id="camera-feed" autoplay playsinline muted style="position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;transform:scaleX(-1);opacity:0.38;display:none;pointer-events:none;filter:brightness(0.95) contrast(1.05);"></video>
+
+  <!-- Hand Tracking Visual Overlay Canvas -->
+  <canvas id="hand-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:4;pointer-events:none;"></canvas>
+
+  <!-- Interactive Hand Cursor & Pinch Indicator -->
+  <div id="hand-cursor" style="position:fixed;width:44px;height:44px;border-radius:50%;border:3px solid #10b981;background:rgba(16,185,129,0.2);transform:translate(-50%,-50%);pointer-events:none;z-index:9999;display:none;transition:border-color 0.15s, background-color 0.15s, transform 0.08s;box-shadow:0 0 16px rgba(16,185,129,0.6);">
+    <div id="hand-cursor-dot" style="position:absolute;top:50%;left:50%;width:10px;height:10px;border-radius:50%;background:#10b981;transform:translate(-50%,-50%);"></div>
+    <div id="hand-cursor-label" style="position:absolute;top:-28px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;font-size:12px;padding:2px 10px;border-radius:10px;white-space:nowrap;font-weight:700;display:none;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🤏 จีบจับ</div>
+  </div>
 
   <!-- Three.js Canvas Container -->
   <div id="webgl-container"></div>
@@ -609,11 +622,11 @@
       <div class="form-group">
         <label class="form-label">เลือกรูปแบบการแสดงผล</label>
         <div style="display: flex; gap: 8px;">
-          <button type="button" id="select-mode-3d" class="btn btn-primary" style="flex: 1; font-size: 14px; padding: 10px;">
-            🖥️ 3D จำลองบนจอ
+          <button type="button" id="select-mode-ar" class="btn btn-primary" style="flex: 1.3; font-size: 14px; padding: 10px;">
+            📹 กล้องหน้าโน้ตบุ๊ก (Hand Tracking)
           </button>
-          <button type="button" id="select-mode-ar" class="btn btn-outline" style="flex: 1; font-size: 14px; padding: 10px;">
-            📱 กล้อง AR วางโต๊ะ
+          <button type="button" id="select-mode-3d" class="btn btn-outline" style="flex: 1; font-size: 14px; padding: 10px;">
+            🖥️ 3D จำลอง (เมาส์)
           </button>
         </div>
       </div>
@@ -2087,10 +2100,259 @@
 
     
     /* ==========================================================
-       AR CAMERA MANAGEMENT (WebRTC getUserMedia & Three.js Passthrough)
+       LAPTOP WEBCAM AR & HAND TRACKING ENGINE (MediaPipe Hands)
        ========================================================== */
-    let arStream = null;
+    let mpHands = null;
+    let mpCamera = null;
+    let isHandTrackingActive = false;
+    let isPinching = false;
+    let lastPinchState = false;
+    let lastHandPos = { x: 0, y: 0 };
+    let handVelocity = 0;
+    let lastAngle = 0;
+    let kneadAngularAccum = 0;
+    let lastActionTime = 0;
 
+    const HAND_CONNECTIONS = [
+      [0, 1], [1, 2], [2, 3], [3, 4],       // Thumb
+      [0, 5], [5, 6], [6, 7], [7, 8],       // Index
+      [5, 9], [9, 10], [10, 11], [11, 12],  // Middle
+      [9, 13], [13, 14], [14, 15], [15, 16],// Ring
+      [13, 17], [17, 18], [18, 19], [19, 20],// Pinky
+      [0, 17]                               // Palm base
+    ];
+
+    function initHandTracking() {
+      if (typeof Hands === 'undefined') {
+        console.warn('MediaPipe Hands is loading...');
+        return;
+      }
+      if (mpHands) return;
+
+      mpHands = new Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+      });
+
+      mpHands.setOptions({
+        maxNumHands: 1, // Single dominant hand
+        modelComplexity: 1,
+        minDetectionConfidence: 0.65,
+        minTrackingConfidence: 0.65
+      });
+
+      mpHands.onResults(onHandResults);
+    }
+
+    function onHandResults(results) {
+      const canvas = document.getElementById('hand-canvas');
+      if (!canvas) return;
+      if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const cursorEl = document.getElementById('hand-cursor');
+      const cursorDot = document.getElementById('hand-cursor-dot');
+      const cursorLabel = document.getElementById('hand-cursor-label');
+
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        const landmarks = results.multiHandLandmarks[0];
+
+        // Draw glowing hand skeleton
+        drawHandSkeleton(ctx, landmarks, canvas.width, canvas.height);
+
+        const thumb = landmarks[4];
+        const index = landmarks[8];
+
+        // Horizontal flip for front webcam mirror view
+        const thumbX = (1 - thumb.x) * canvas.width;
+        const thumbY = thumb.y * canvas.height;
+        const indexX = (1 - index.x) * canvas.width;
+        const indexY = index.y * canvas.height;
+
+        const cursorX = (thumbX + indexX) / 2;
+        const cursorY = (thumbY + indexY) / 2;
+
+        // Calculate pinch distance
+        const dx = thumb.x - index.x;
+        const dy = thumb.y - index.y;
+        const dz = (thumb.z - index.z) || 0;
+        const pinchDist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+        const PINCH_THRESHOLD = 0.085;
+        const currentlyPinching = pinchDist < PINCH_THRESHOLD;
+
+        // Velocity
+        const vdx = cursorX - lastHandPos.x;
+        const vdy = cursorY - lastHandPos.y;
+        const moveDist = Math.sqrt(vdx * vdx + vdy * vdy);
+        handVelocity = moveDist;
+        lastHandPos = { x: cursorX, y: cursorY };
+
+        // Update visual hand cursor
+        if (cursorEl) {
+          cursorEl.style.display = 'block';
+          cursorEl.style.left = cursorX + 'px';
+          cursorEl.style.top = cursorY + 'px';
+
+          if (currentlyPinching) {
+            cursorEl.style.borderColor = '#22c55e';
+            cursorEl.style.backgroundColor = 'rgba(34, 197, 94, 0.45)';
+            cursorEl.style.transform = 'translate(-50%, -50%) scale(0.85)';
+            if (cursorDot) cursorDot.style.backgroundColor = '#22c55e';
+            if (cursorLabel) {
+              cursorLabel.style.display = 'block';
+              cursorLabel.textContent = '🤏 จีบจับ';
+            }
+          } else {
+            cursorEl.style.borderColor = '#10b981';
+            cursorEl.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
+            cursorEl.style.transform = 'translate(-50%, -50%) scale(1.0)';
+            if (cursorDot) cursorDot.style.backgroundColor = '#10b981';
+            if (cursorLabel) cursorLabel.style.display = 'none';
+          }
+        }
+
+        // Gesture Actions
+        if (currentlyPinching && !lastPinchState) {
+          handlePinchClick(cursorX, cursorY);
+        }
+
+        handleContinuousHandGestures(cursorX, cursorY, currentlyPinching, moveDist);
+
+        lastPinchState = currentlyPinching;
+        isPinching = currentlyPinching;
+      } else {
+        if (cursorEl) cursorEl.style.display = 'none';
+        isPinching = false;
+        lastPinchState = false;
+      }
+    }
+
+    function drawHandSkeleton(ctx, landmarks, width, height) {
+      ctx.save();
+      // Glowing bones
+      ctx.strokeStyle = 'rgba(52, 211, 153, 0.7)';
+      ctx.lineWidth = 3;
+      ctx.shadowColor = '#10b981';
+      ctx.shadowBlur = 10;
+
+      HAND_CONNECTIONS.forEach(([i, j]) => {
+        const p1 = landmarks[i];
+        const p2 = landmarks[j];
+        ctx.beginPath();
+        ctx.moveTo((1 - p1.x) * width, p1.y * height);
+        ctx.lineTo((1 - p2.x) * width, p2.y * height);
+        ctx.stroke();
+      });
+
+      // Joint nodes
+      landmarks.forEach((p, idx) => {
+        const x = (1 - p.x) * width;
+        const y = p.y * height;
+        ctx.beginPath();
+        ctx.arc(x, y, (idx === 4 || idx === 8) ? 6 : 4, 0, Math.PI * 2);
+        ctx.fillStyle = (idx === 4 || idx === 8) ? '#fbbf24' : '#6ee7b7';
+        ctx.shadowColor = '#34d399';
+        ctx.shadowBlur = 8;
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    function handlePinchClick(screenX, screenY) {
+      sound.playTone(520, 'sine', 0.08, 0.15);
+
+      // 1. Raycast to 3D scene (for eggs in Stage 1)
+      if (camera && scene && GAME_STATE.currentStage === 1) {
+        const raycaster = new THREE.Raycaster();
+        const mouseNDC = new THREE.Vector2(
+          (screenX / window.innerWidth) * 2 - 1,
+          -(screenY / window.innerHeight) * 2 + 1
+        );
+        raycaster.setFromCamera(mouseNDC, camera);
+        const intersects = raycaster.intersectObjects(stage1Eggs, true);
+        if (intersects.length > 0) {
+          const hitMesh = intersects[0].object;
+          if (hitMesh.userData && typeof hitMesh.userData.id !== 'undefined') {
+            selectEggDirectly(hitMesh.userData.id);
+            return;
+          }
+        }
+      }
+
+      // 2. Interactive DOM elements (Buttons, Cards, Recipe ingredients)
+      const hitEl = document.elementFromPoint(screenX, screenY);
+      if (hitEl) {
+        const clickable = hitEl.closest('button, .step-card, .ingredient-btn');
+        if (clickable) {
+          clickable.classList.add('active');
+          clickable.click();
+          setTimeout(() => clickable.classList.remove('active'), 200);
+        }
+      }
+    }
+
+    function handleContinuousHandGestures(cursorX, cursorY, pinching, moveDist) {
+      const now = Date.now();
+      const stage = GAME_STATE.currentStage;
+
+      // Stage 2: Rubbing to wash & dry
+      if (stage === 2) {
+        if (moveDist > 12 && now - lastActionTime > 180) {
+          lastActionTime = now;
+          if (!GAME_STATE.stage2.isClean) {
+            actionWashEgg();
+          } else if (!GAME_STATE.stage2.isDry) {
+            actionDryEgg();
+          }
+        }
+      }
+
+      // Stage 3: Circular motion in the air to knead dough
+      else if (stage === 3 && GAME_STATE.stage3.dinSorPhong === 3 && GAME_STATE.stage3.salt === 1 && GAME_STATE.stage3.water === 1) {
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight * 0.55;
+        const currentAngle = Math.atan2(cursorY - centerY, cursorX - centerX);
+        let diff = currentAngle - lastAngle;
+        if (diff > Math.PI) diff -= 2 * Math.PI;
+        if (diff < -Math.PI) diff += 2 * Math.PI;
+
+        kneadAngularAccum += Math.abs(diff);
+        lastAngle = currentAngle;
+
+        if (kneadAngularAccum > 1.2 && now - lastActionTime > 100) {
+          lastActionTime = now;
+          kneadAngularAccum = 0;
+          handleKnead({ isHandGesture: true });
+        }
+      }
+
+      // Stage 4: Waving across egg to coat clay & Pinch-drag to rotate
+      else if (stage === 4) {
+        if (pinching && moveDist > 18 && now - lastActionTime > 250) {
+          lastActionTime = now;
+          rotateEgg360();
+        } else if (!pinching && moveDist > 15 && now - lastActionTime > 220) {
+          lastActionTime = now;
+          actionCoatClay();
+        }
+      }
+
+      // Stage 5: Waving left-right across black husk tray
+      else if (stage === 5) {
+        if (moveDist > 14 && now - lastActionTime > 200) {
+          lastActionTime = now;
+          actionRollInHusk();
+        }
+      }
+    }
+
+    /* ==========================================================
+       AR CAMERA MANAGEMENT (Webcam Hand Tracking Passthrough)
+       ========================================================== */
     async function startARCamera() {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         showToast('⚠️ อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการเปิดกล้อง');
@@ -2099,42 +2361,58 @@
         return false;
       }
 
-      showToast('📷 กำลังขออนุญาตเปิดกล้อง AR...');
+      showToast('📷 กำลังเปิดกล้องหน้าโน้ตบุ๊กและระบบตรวจจับมือ...');
+      setMascot('กำลังเปิดกล้องหน้าโน้ตบุ๊กและเชื่อมต่อระบบตรวจจับมือ (Hand Tracking) สักครู่นะจ๊ะ...', 'thinking');
+
       try {
-        try {
-          arStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        const video = document.getElementById('camera-feed');
+        video.style.display = 'block';
+
+        initHandTracking();
+
+        if (typeof Camera !== 'undefined' && mpHands) {
+          mpCamera = new Camera(video, {
+            onFrame: async () => {
+              if (isHandTrackingActive && mpHands) {
+                await mpHands.send({ image: video });
+              }
+            },
+            facingMode: 'user', // Laptop front camera
+            width: 1280,
+            height: 720
+          });
+          await mpCamera.start();
+        } else {
+          // Direct getUserMedia fallback
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
             audio: false
           });
-        } catch (errConstraint) {
-          // Fallback to any available camera (e.g. laptop webcam)
-          arStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+          video.srcObject = stream;
+          await video.play();
         }
-        const video = document.getElementById('camera-feed');
-        video.srcObject = arStream;
-        video.style.display = 'block';
-        await video.play();
 
-        // Make Three.js canvas background transparent
-        scene.background = null;
-        renderer.setClearColor(0x000000, 0);
+        isHandTrackingActive = true;
+
+        // Three.js transparent background
+        if (scene) scene.background = null;
+        if (renderer) renderer.setClearColor(0x000000, 0);
 
         if (tableGroup) {
-          tableGroup.position.set(0, -0.4, 0);
-          tableGroup.scale.set(0.8, 0.8, 0.8);
+          tableGroup.position.set(0, -0.35, 0);
+          tableGroup.scale.set(0.85, 0.85, 0.85);
         }
 
         GAME_STATE.mode = 'ar';
-        document.getElementById('ar-reticle').style.display = 'block';
-        document.getElementById('btn-mode-toggle').textContent = '📷';
-        showToast('✨ เปิดกล้อง AR สำเร็จแล้ว! ส่องโต๊ะในห้องเพื่อทำกิจกรรมได้เลย');
-        setMascot('เปิดกล้องแล้วจ้า! ส่องโต๊ะในห้องเรียนแล้วเริ่มลงมือทำไข่เค็มบนโต๊ะจริงได้เลย!', 'celebrate');
+        document.getElementById('btn-mode-toggle').textContent = '✋';
+        showToast('✨ เปิดกล้องตรวจจับมือสำเร็จ! ยกมือหน้ากล้องแล้วใช้ท่าจีบนิ้วเพื่อเล่นได้เลย');
+        setMascot('เปิดกล้องหน้าแล้วจ้า! ยกมือขึ้นมาหน้าจอ แล้วลองทำท่า "จีบนิ้วโป้งแตะนิ้วชี้" เพื่อหยิบไข่ได้เลย!', 'celebrate');
         return true;
       } catch (err) {
-        console.error('Camera access error:', err);
+        console.error('Camera/Hand tracking error:', err);
         let msg = 'ไม่สามารถเปิดกล้องได้';
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          msg = '⚠️ กรุณากด "อนุญาต" (Allow) ให้เบราว์เซอร์เข้าถึงกล้อง';
+          msg = '⚠️ กรุณากด "อนุญาต" (Allow) ให้เบราว์เซอร์เข้าถึงกล้องหน้า';
           setMascot('อย่าลืมกด "อนุญาต" (Allow) สิทธิ์กล้องในเบราว์เซอร์นะจ๊ะ หรือแตะไอคอนแม่กุญแจ 🔒 ที่แถบ URL เพื่อเปิดสิทธิ์กล้อง (หากไม่ได้ น้องไข่เค็มปรับเป็นโหมด 3D ให้จ้า)', 'warning');
         } else if (err.name === 'SecurityError') {
           msg = '⚠️ ติดข้อจำกัดความปลอดภัยของเบราว์เซอร์ (เปิดโหมด 3D จำลองแทน)';
@@ -2151,30 +2429,39 @@
     }
 
     function stopARCamera() {
-      if (arStream) {
-        arStream.getTracks().forEach(track => track.stop());
-        arStream = null;
+      isHandTrackingActive = false;
+      if (mpCamera) {
+        try { mpCamera.stop(); } catch(e){}
+        mpCamera = null;
       }
       const video = document.getElementById('camera-feed');
       if (video) {
-        video.srcObject = null;
+        if (video.srcObject) {
+          video.srcObject.getTracks().forEach(t => t.stop());
+          video.srcObject = null;
+        }
         video.style.display = 'none';
       }
-      if (scene) {
-        scene.background = new THREE.Color(0xf1f5f9);
+      const canvas = document.getElementById('hand-canvas');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
+      const cursorEl = document.getElementById('hand-cursor');
+      if (cursorEl) cursorEl.style.display = 'none';
+
+      if (scene) scene.background = new THREE.Color(0xf1f5f9);
       if (tableGroup) {
         tableGroup.position.set(0, 0, 0);
         tableGroup.scale.set(1, 1, 1);
       }
       GAME_STATE.mode = '3d';
-      document.getElementById('ar-reticle').style.display = 'none';
       document.getElementById('btn-mode-toggle').textContent = '🔄';
     }
 
     function switchTo3DMode() {
       stopARCamera();
-      showToast('สลับเข้าสู่โหมดจำลอง 3D');
+      showToast('สลับเข้าสู่โหมดจำลอง 3D (เมาส์ / ทัชสกรีน)');
     }
 
     /* ==========================================================

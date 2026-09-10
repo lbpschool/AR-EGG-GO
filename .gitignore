@@ -1,0 +1,8 @@
+﻿# Google Apps Script & Clasp private configs
+.clasp.json
+.clasprc.json
+
+# Node modules & OS temporary files
+node_modules/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,11 @@
+﻿{
+  "name": "game-gas-project",
+  "version": "1.0.0",
+  "description": "Google Apps Script project linked with Google Sheet",
+  "scripts": {
+    "push": "clasp push",
+    "pull": "clasp pull",
+    "status": "clasp status",
+    "open": "clasp open"
+  }
+}

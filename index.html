@@ -47,7 +47,7 @@
       height: 100%;
       overflow: hidden;
       font-family: 'Prompt', 'Sarabun', sans-serif;
-      background: #111827;
+      background: #f1f5f9;
       color: var(--text-dark);
     }
 
@@ -531,7 +531,7 @@
 <body>
   <!-- Real Camera Feed for AR -->
   <!-- Real Camera Feed for AR (Mirrored for Laptop Webcam with Semi-transparent Background) -->
-  <video id="camera-feed" autoplay playsinline muted style="position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;transform:scaleX(-1);opacity:0.38;display:none;pointer-events:none;filter:brightness(0.95) contrast(1.05);"></video>
+  <video id="camera-feed" autoplay playsinline muted style="position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;transform:scaleX(-1);opacity:0.48;display:none;pointer-events:none;filter:brightness(0.98) contrast(1.05);"></video>
 
   <!-- Hand Tracking Visual Overlay Canvas -->
   <canvas id="hand-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:4;pointer-events:none;"></canvas>
@@ -565,7 +565,7 @@
           <span id="score-display">0 / 100</span>
         </div>
         <button id="btn-audio-toggle" class="icon-btn" title="เปิด/ปิดเสียง">🔊</button>
-        <button id="btn-mode-toggle" class="icon-btn" title="สลับมุมมอง 3D / AR">🔄</button>
+        <button id="btn-mode-toggle" class="icon-btn" title="เปิด/ปิดกล้องหน้าและระบบตรวจจับมือ (AR)">📹</button>
         <button id="btn-help-hint" class="icon-btn" style="background: #fef08a; color: #b45309;" title="ขอคำใบ้">💡</button>
       </div>
     </div>
@@ -952,7 +952,7 @@
        ========================================================== */
     const GAME_STATE = {
       student: { name: '', no: '', class: '' },
-      mode: '3d',
+      mode: 'ar',
       currentStage: 1,
       startTime: null,
       endTime: null,
@@ -2979,6 +2979,10 @@
     /* ==========================================================
        AR CAMERA MANAGEMENT (Webcam Hand Tracking Passthrough)
        ========================================================== */
+    let cameraStream = null;
+    let cameraLoopActive = false;
+    let isProcessingFrame = false;
+
     async function startARCamera() {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         showToast('⚠️ อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการเปิดกล้อง');
@@ -2987,7 +2991,7 @@
         return false;
       }
 
-      showToast('📷 กำลังเปิดกล้องหน้าโน้ตบุ๊กและระบบตรวจจับมือ...');
+      showToast('📷 กำลังขออนุญาตเปิดกล้องหน้าโน้ตบุ๊ก...');
       setMascot('กำลังเปิดกล้องหน้าโน้ตบุ๊กและเชื่อมต่อระบบตรวจจับมือ (Hand Tracking) สักครู่นะจ๊ะ...', 'thinking');
 
       try {
@@ -2996,31 +3000,53 @@
 
         initHandTracking();
 
-        if (typeof Camera !== 'undefined' && mpHands) {
-          mpCamera = new Camera(video, {
-            onFrame: async () => {
-              if (isHandTrackingActive && mpHands) {
-                await mpHands.send({ image: video });
-              }
+        // 1. Get Webcam stream (ideal resolution first, fallback to basic)
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: 'user',
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
             },
-            facingMode: 'user', // Laptop front camera
-            width: 1280,
-            height: 720
-          });
-          await mpCamera.start();
-        } else {
-          // Direct getUserMedia fallback
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
             audio: false
           });
-          video.srcObject = stream;
-          await video.play();
+        } catch (resErr) {
+          console.warn('Ideal resolution getUserMedia failed, retrying basic constraints...', resErr);
+          cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user' },
+            audio: false
+          });
         }
 
-        isHandTrackingActive = true;
+        video.srcObject = cameraStream;
+        await video.play();
 
-        // Three.js transparent background
+        // 2. Start frame loop for Hand Tracking
+        isHandTrackingActive = true;
+        cameraLoopActive = true;
+        isProcessingFrame = false;
+
+        async function processFrameLoop() {
+          if (!isHandTrackingActive || !cameraLoopActive) return;
+          if (!isProcessingFrame && video.readyState >= 2) {
+            if (!mpHands) initHandTracking();
+            if (mpHands) {
+              isProcessingFrame = true;
+              try {
+                await mpHands.send({ image: video });
+              } catch (frameErr) {
+                // Drop frame safely if busy
+              }
+              isProcessingFrame = false;
+            }
+          }
+          if (isHandTrackingActive && cameraLoopActive) {
+            requestAnimationFrame(processFrameLoop);
+          }
+        }
+        requestAnimationFrame(processFrameLoop);
+
+        // 3. Transparent background so student video is visible
         if (scene) scene.background = null;
         if (renderer) renderer.setClearColor(0x000000, 0);
 
@@ -3030,7 +3056,13 @@
         }
 
         GAME_STATE.mode = 'ar';
-        document.getElementById('btn-mode-toggle').textContent = '✋';
+        const toggleBtn = document.getElementById('btn-mode-toggle');
+        if (toggleBtn) {
+          toggleBtn.textContent = '✋';
+          toggleBtn.title = 'โหมดตรวจจับมือทำงานอยู่ (แตะเพื่อสลับเป็น 3D จำลอง)';
+          toggleBtn.style.background = 'rgba(220, 252, 231, 0.95)';
+          toggleBtn.style.boxShadow = '0 0 14px rgba(34, 197, 94, 0.55)';
+        }
         showToast('✨ เปิดกล้องตรวจจับมือสำเร็จ! ยกมือหน้ากล้องแล้วใช้ท่าจีบนิ้วเพื่อเล่นได้เลย');
         setMascot('เปิดกล้องหน้าแล้วจ้า! ยกมือขึ้นมาหน้าจอ แล้วลองทำท่า "จีบนิ้วโป้งแตะนิ้วชี้" เพื่อหยิบไข่ได้เลย!', 'celebrate');
         return true;
@@ -3044,7 +3076,8 @@
           msg = '⚠️ ติดข้อจำกัดความปลอดภัยของเบราว์เซอร์ (เปิดโหมด 3D จำลองแทน)';
           setMascot('เนื่องจากระบบความปลอดภัยของเบราว์เซอร์ไม่อนุญาตให้เปิดกล้องในหน้านี้ น้องไข่เค็มพาเล่นในโหมด 3D จำลองแทนได้ครบ 100% เลยจ้า!', 'warning');
         } else if (err.name === 'NotFoundError') {
-          msg = '⚠️ ไม่พบอุปกรณ์กล้องบนเครื่องนี้';
+          msg = '⚠️ ไม่พบอุปกรณ์กล้องบนเครื่องนี้ (เปิดโหมด 3D จำลองแทน)';
+          setMascot('ไม่พบอุปกรณ์กล้องบนเครื่องนี้ น้องไข่เค็มปรับเป็นโหมด 3D ให้เล่นด้วยเมาส์แทนจ้า', 'warning');
         } else {
           msg = '⚠️ เปิดกล้องไม่สำเร็จ (' + (err.message || err.name) + ')';
         }
@@ -3056,14 +3089,23 @@
 
     function stopARCamera() {
       isHandTrackingActive = false;
+      cameraLoopActive = false;
       if (mpCamera) {
         try { mpCamera.stop(); } catch(e){}
         mpCamera = null;
       }
+      if (cameraStream) {
+        try {
+          cameraStream.getTracks().forEach(t => t.stop());
+        } catch(e){}
+        cameraStream = null;
+      }
       const video = document.getElementById('camera-feed');
       if (video) {
         if (video.srcObject) {
-          video.srcObject.getTracks().forEach(t => t.stop());
+          try {
+            video.srcObject.getTracks().forEach(t => t.stop());
+          } catch(e){}
           video.srcObject = null;
         }
         video.style.display = 'none';
@@ -3082,7 +3124,13 @@
         tableGroup.scale.set(1, 1, 1);
       }
       GAME_STATE.mode = '3d';
-      document.getElementById('btn-mode-toggle').textContent = '🔄';
+      const toggleBtn = document.getElementById('btn-mode-toggle');
+      if (toggleBtn) {
+        toggleBtn.textContent = '📹';
+        toggleBtn.title = 'คลิกเพื่อเปิดกล้องหน้าและระบบตรวจจับมือ (AR)';
+        toggleBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+        toggleBtn.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
+      }
     }
 
     function switchTo3DMode() {
@@ -3095,6 +3143,7 @@
        ========================================================== */
     window.addEventListener('DOMContentLoaded', () => {
       init3D();
+      initHandTracking();
 
       // Mouse & Touch 3D Egg Dragging Support
       if (renderer && renderer.domElement) {
@@ -3156,7 +3205,7 @@
         showToast('ขอคำใบ้ช่วยเหลือ');
       });
 
-      document.getElementById('btn-start-game').addEventListener('click', () => {
+      document.getElementById('btn-start-game').addEventListener('click', async () => {
         const nameInput = document.getElementById('input-student-name').value.trim();
         if (!nameInput) {
           showToast('⚠️ กรุณากรอกชื่อ-นามสกุลก่อนเริ่มเล่นนะ');
@@ -3170,10 +3219,10 @@
         sound.init();
         sound.playCorrect();
         document.getElementById('modal-welcome').style.display = 'none';
-        if (GAME_STATE.mode === 'ar') {
-          startARCamera();
-        }
         setStage(1);
+        if (GAME_STATE.mode === 'ar') {
+          await startARCamera();
+        }
       });
 
       document.getElementById('select-mode-3d').addEventListener('click', function() {

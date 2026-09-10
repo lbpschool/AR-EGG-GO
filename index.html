@@ -1252,8 +1252,27 @@
       requestAnimationFrame(animate);
       controls.update();
 
-      if (eggMesh && eggMesh.visible && GAME_STATE.currentStage === 4) {
+      if (eggMesh && eggMesh.visible && GAME_STATE.currentStage === 4 && !isEggGrabbed) {
         eggMesh.position.y = 0.55 + Math.sin(Date.now() * 0.003) * 0.04;
+      }
+
+      // Update 3D VFX particles (water splash & dry sparkles)
+      if (typeof vfxParticles !== 'undefined') {
+        for (let i = vfxParticles.length - 1; i >= 0; i--) {
+          const p = vfxParticles[i];
+          p.position.x += p.userData.vx;
+          p.position.y += p.userData.vy;
+          p.position.z += p.userData.vz;
+          p.userData.vy -= 0.002;
+          p.userData.life -= 0.038;
+          if (p.material) p.material.opacity = Math.max(0, p.userData.life);
+          if (p.userData.life <= 0) {
+            scene.remove(p);
+            if (p.geometry) p.geometry.dispose();
+            if (p.material) p.material.dispose();
+            vfxParticles.splice(i, 1);
+          }
+        }
       }
 
       renderer.render(scene, camera);
@@ -1287,6 +1306,8 @@
 
     function setStage(stageNum) {
       GAME_STATE.currentStage = stageNum;
+      isEggGrabbed = false;
+      isPointerDragging = false;
       const badgeText = document.getElementById('stage-badge-text');
       const actionCard = document.getElementById('dynamic-action-card');
 
@@ -1295,7 +1316,10 @@
       if (bowlMesh) bowlMesh.visible = false;
       if (huskTrayMesh) huskTrayMesh.visible = false;
       if (eggCartonMesh) eggCartonMesh.visible = false;
-      if (eggMesh) eggMesh.visible = false;
+      if (eggMesh) {
+        eggMesh.visible = false;
+        eggMesh.scale.set(1, 1, 1);
+      }
       stage1Eggs.forEach(e => e.visible = false);
 
       switch (stageNum) {
@@ -1325,7 +1349,7 @@
 
         case 2:
           badgeText.textContent = 'ด่านที่ 2 : สะอาดก่อนหมัก';
-          setMascot('เก่งมาก! ต่อไปเราต้องนำไข่ไปล้างให้สะอาด และเช็ดให้แห้งสนิทก่อนพอกดินสอพองนะ', 'happy');
+          setMascot('จีบนิ้วเพื่อหยิบไข่ 🤏 แล้วลากไปจุ่มล้างในอ่างน้ำสีฟ้าทางซ้าย จากนั้นนำไปเช็ดบนผ้าสีเหลืองทางขวานะจ๊ะ!', 'happy');
           eggMesh.visible = true;
           eggMesh.position.set(0, 0.55, 0);
           waterBasinMesh.visible = true;
@@ -1334,7 +1358,9 @@
 
           actionCard.innerHTML = `
             <h3>ภารกิจ: ล้างและเช็ดไข่ให้แห้ง</h3>
-            <p style="margin: 6px 0; font-size: 14px; color: #4b5563;">ล้างคราบสกปรกและเช็ดให้แห้งสนิท</p>
+            <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 8px 12px; margin: 8px 0; font-size: 13px; color: #065f46; text-align: left; line-height: 1.5;">
+              <b>วิธีเล่น:</b> 🤏 <b>จีบนิ้วเพื่อหยิบไข่</b> (หรือคลิกลาก) ➔ ลากไปจุ่มใน <b>อ่างน้ำ (ซ้าย)</b> เพื่อล้าง ➔ แล้วลากมาถูบน <b>ผ้าเหลือง (ขวา)</b> เพื่อเช็ดให้แห้งสนิท
+            </div>
             
             <div style="text-align: left; margin: 8px 0;">
               <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
@@ -1578,33 +1604,49 @@
       updateScoreDisplay();
     }
 
-    function actionWashEgg() {
+    function actionWashEgg(step = 20) {
       sound.playSplash();
-      GAME_STATE.stage2.cleanPercent = Math.min(100, GAME_STATE.stage2.cleanPercent + 25);
-      document.getElementById('s2-clean-progress').style.width = GAME_STATE.stage2.cleanPercent + '%';
-      document.getElementById('s2-clean-val').textContent = GAME_STATE.stage2.cleanPercent + '%';
+      GAME_STATE.stage2.cleanPercent = Math.min(100, GAME_STATE.stage2.cleanPercent + step);
+      const cleanEl = document.getElementById('s2-clean-progress');
+      const valEl = document.getElementById('s2-clean-val');
+      if (cleanEl) cleanEl.style.width = GAME_STATE.stage2.cleanPercent + '%';
+      if (valEl) valEl.textContent = GAME_STATE.stage2.cleanPercent + '%';
+
+      if (eggMesh) {
+        eggMesh.material.roughness = 0.2; // shiny wet surface
+      }
 
       if (GAME_STATE.stage2.cleanPercent >= 100 && !GAME_STATE.stage2.isClean) {
         GAME_STATE.stage2.isClean = true;
-        showToast('💧 ล้างไข่สะอาดเรียบร้อยแล้ว!');
-        setMascot('ล้างสะอาดแล้ว อย่าลืมใช้ผ้าเช็ดให้แห้งสนิทนะ', 'happy');
+        sound.playCorrect();
+        showToast('💧 ล้างไข่สะอาด 100% แล้ว! ลากไปเช็ดบนผ้าสีเหลืองทางขวาต่อเลย', 3000);
+        setMascot('ล้างสะอาดเอี่ยมแล้ว! ตอนนี้ลากไข่ไปถูบนผ้าสีเหลืองทางขวาให้แห้งสนิทนะจ๊ะ', 'happy');
       }
     }
 
-    function actionDryEgg() {
+    function actionDryEgg(step = 20) {
       if (GAME_STATE.stage2.cleanPercent < 50) {
         sound.playWrong();
-        showToast('⚠️ ควรล้างคราบสกปรกให้สะอาดก่อนเช็ดจ้า');
+        showToast('⚠️ ควรล้างคราบสกปรกในอ่างน้ำให้สะอาดก่อนเช็ดจ้า', 2000);
         return;
       }
-      sound.playTone(300, 'sine', 0.1, 0.1);
-      GAME_STATE.stage2.dryPercent = Math.min(100, GAME_STATE.stage2.dryPercent + 25);
-      document.getElementById('s2-dry-progress').style.width = GAME_STATE.stage2.dryPercent + '%';
-      document.getElementById('s2-dry-val').textContent = GAME_STATE.stage2.dryPercent + '%';
+      sound.playTone(320, 'sine', 0.08, 0.1);
+      GAME_STATE.stage2.dryPercent = Math.min(100, GAME_STATE.stage2.dryPercent + step);
+      const dryEl = document.getElementById('s2-dry-progress');
+      const valEl = document.getElementById('s2-dry-val');
+      if (dryEl) dryEl.style.width = GAME_STATE.stage2.dryPercent + '%';
+      if (valEl) valEl.textContent = GAME_STATE.stage2.dryPercent + '%';
 
-      if (GAME_STATE.stage2.dryPercent >= 100) {
+      if (GAME_STATE.stage2.dryPercent >= 100 && !GAME_STATE.stage2.isDry) {
         GAME_STATE.stage2.isDry = true;
-        showToast('✨ ไข่แห้งสนิทพร้อมพอกแล้ว!');
+        if (eggMesh) eggMesh.material.roughness = 0.45; // matte clean shell
+        sound.playTriumph();
+        showToast('✨ ไข่สะอาดและแห้งสนิท 100% แล้ว! กดปุ่มไปขั้นตอนต่อไปได้เลย', 3000);
+        setMascot('ยอดเยี่ยมมาก! ไข่สะอาดและแห้งสนิท 100% แล้ว พร้อมไปผสมสูตรลับ 3:1:1 ในด่านที่ 3 ได้เลย!', 'celebrate');
+        const nextBtn = document.getElementById('btn-s2-next');
+        if (nextBtn) {
+          nextBtn.style.boxShadow = '0 0 20px rgba(34, 197, 94, 0.8)';
+        }
       }
     }
 
@@ -2112,6 +2154,12 @@
     let lastAngle = 0;
     let kneadAngularAccum = 0;
     let lastActionTime = 0;
+    let isEggGrabbed = false;
+    let isPointerDragging = false;
+    let lastWashTime = 0;
+    let lastDryTime = 0;
+    let lastHuskRollTime = 0;
+    const vfxParticles = [];
 
     const HAND_CONNECTIONS = [
       [0, 1], [1, 2], [2, 3], [3, 4],       // Thumb
@@ -2121,6 +2169,212 @@
       [13, 17], [17, 18], [18, 19], [19, 20],// Pinky
       [0, 17]                               // Palm base
     ];
+
+    function getObjectScreenPos(obj) {
+      if (!obj || !camera) return { x: -9999, y: -9999 };
+      const vec = new THREE.Vector3();
+      obj.getWorldPosition(vec);
+      vec.project(camera);
+      return {
+        x: ((vec.x + 1) * window.innerWidth) / 2,
+        y: ((-vec.y + 1) * window.innerHeight) / 2
+      };
+    }
+
+    function getPointOnPlane(screenX, screenY, planeY = 0.55) {
+      if (!camera) return null;
+      const mouseNDC = new THREE.Vector2(
+        (screenX / window.innerWidth) * 2 - 1,
+        -(screenY / window.innerHeight) * 2 + 1
+      );
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouseNDC, camera);
+      const dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -planeY);
+      const targetPoint = new THREE.Vector3();
+      if (raycaster.ray.intersectPlane(dragPlane, targetPoint)) {
+        return targetPoint;
+      }
+      return null;
+    }
+
+    function spawnSplashParticles(x, y, z) {
+      for (let i = 0; i < 5; i++) {
+        const geo = new THREE.SphereGeometry(0.04, 8, 8);
+        const mat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.85 });
+        const p = new THREE.Mesh(geo, mat);
+        p.position.set(x + (Math.random() - 0.5) * 0.35, y, z + (Math.random() - 0.5) * 0.35);
+        p.userData = {
+          vx: (Math.random() - 0.5) * 0.04,
+          vy: 0.035 + Math.random() * 0.04,
+          vz: (Math.random() - 0.5) * 0.04,
+          life: 1.0
+        };
+        scene.add(p);
+        vfxParticles.push(p);
+      }
+    }
+
+    function spawnSparkleParticles(x, y, z) {
+      for (let i = 0; i < 4; i++) {
+        const geo = new THREE.SphereGeometry(0.03, 6, 6);
+        const mat = new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.9 });
+        const p = new THREE.Mesh(geo, mat);
+        p.position.set(x + (Math.random() - 0.5) * 0.25, y, z + (Math.random() - 0.5) * 0.25);
+        p.userData = {
+          vx: (Math.random() - 0.5) * 0.02,
+          vy: 0.02 + Math.random() * 0.03,
+          vz: (Math.random() - 0.5) * 0.02,
+          life: 1.0
+        };
+        scene.add(p);
+        vfxParticles.push(p);
+      }
+    }
+
+    function tryGrabEgg(screenX, screenY) {
+      const stage = GAME_STATE.currentStage;
+      if (!eggMesh || !eggMesh.visible) return false;
+
+      // Draggable in Stages 2, 4, 5, 6
+      if (stage === 2 || stage === 4 || stage === 5 || stage === 6) {
+        const raycaster = new THREE.Raycaster();
+        const mouseNDC = new THREE.Vector2(
+          (screenX / window.innerWidth) * 2 - 1,
+          -(screenY / window.innerHeight) * 2 + 1
+        );
+        raycaster.setFromCamera(mouseNDC, camera);
+        const intersects = raycaster.intersectObject(eggMesh, true);
+
+        const eggScreen = getObjectScreenPos(eggMesh);
+        const screenDist = Math.hypot(screenX - eggScreen.x, screenY - eggScreen.y);
+
+        if (intersects.length > 0 || screenDist < 140) {
+          isEggGrabbed = true;
+          sound.playTone(580, 'sine', 0.08, 0.18);
+          eggMesh.scale.set(1.15, 1.15, 1.15);
+          if (stage === 2) {
+            showToast('🤏 หยิบไข่แล้ว! ลากไปจุ่มในอ่างน้ำ (ซ้าย) หรือเช็ดผ้า (ขวา)', 1800);
+          } else if (stage === 5) {
+            showToast('🤏 หยิบไข่แล้ว! กลิ้งไปมาในถาดแกลบดำได้เลย', 1800);
+          } else if (stage === 6) {
+            showToast('🤏 หยิบไข่แล้ว! ลากไปวางลงในกล่องได้เลย', 1800);
+          }
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function updateGrabbedEggPosition(screenX, screenY, moveDist = 0) {
+      if (!isEggGrabbed || !eggMesh) return;
+      const stage = GAME_STATE.currentStage;
+      const now = Date.now();
+
+      if (stage === 2) {
+        const pt = getPointOnPlane(screenX, screenY, 0.75);
+        if (pt) {
+          const targetX = Math.max(-1.7, Math.min(1.7, pt.x));
+          const targetZ = Math.max(-0.9, Math.min(0.9, pt.z));
+
+          eggMesh.position.x += (targetX - eggMesh.position.x) * 0.45;
+          eggMesh.position.z += (targetZ - eggMesh.position.z) * 0.45;
+
+          const distToBasin = Math.hypot(eggMesh.position.x - (-1.2), eggMesh.position.z);
+          const distToCloth = Math.hypot(eggMesh.position.x - 1.2, eggMesh.position.z);
+
+          // Over Water Basin (Left)
+          if (distToBasin < 0.95 || eggMesh.position.x < -0.65) {
+            eggMesh.position.y = 0.40; // dip into water
+            eggMesh.rotation.z += 0.04;
+            eggMesh.rotation.x += 0.02;
+
+            if (now - lastWashTime > 180) {
+              lastWashTime = now;
+              actionWashEgg(15);
+              spawnSplashParticles(eggMesh.position.x, 0.42, eggMesh.position.z);
+            }
+          }
+          // Over Yellow Cloth (Right)
+          else if (distToCloth < 0.95 || eggMesh.position.x > 0.65) {
+            eggMesh.position.y = 0.22; // rest on cloth
+            eggMesh.rotation.y += 0.03;
+
+            if (now - lastDryTime > 180) {
+              lastDryTime = now;
+              actionDryEgg(15);
+              if (GAME_STATE.stage2.cleanPercent >= 50) {
+                spawnSparkleParticles(eggMesh.position.x, 0.24, eggMesh.position.z);
+              }
+            }
+          }
+          // In the air (between basin and cloth)
+          else {
+            eggMesh.position.y = 0.78;
+          }
+        }
+      } else if (stage === 4) {
+        eggMesh.rotation.y += (screenX - lastHandPos.x) * 0.015;
+        eggMesh.rotation.x += (screenY - lastHandPos.y) * 0.015;
+      } else if (stage === 5) {
+        const pt = getPointOnPlane(screenX, screenY, 0.35);
+        if (pt) {
+          const targetX = Math.max(-0.65, Math.min(0.65, pt.x));
+          const targetZ = Math.max(-0.4, Math.min(0.4, pt.z));
+          const dx = targetX - eggMesh.position.x;
+          eggMesh.position.x = targetX;
+          eggMesh.position.z = targetZ;
+          eggMesh.position.y = 0.35;
+          eggMesh.rotation.z -= dx * 2.5;
+
+          if (Math.abs(dx) > 0.015 && now - lastHuskRollTime > 160) {
+            lastHuskRollTime = now;
+            actionRollInHusk();
+          }
+        }
+      } else if (stage === 6) {
+        const pt = getPointOnPlane(screenX, screenY, 0.6);
+        if (pt) {
+          eggMesh.position.x = Math.max(-0.6, Math.min(0.6, pt.x));
+          eggMesh.position.z = Math.max(-0.4, Math.min(0.4, pt.z));
+          const distToCenter = Math.hypot(eggMesh.position.x, eggMesh.position.z);
+          if (distToCenter < 0.45) {
+            eggMesh.position.y = 0.32;
+            actionPackEgg();
+          } else {
+            eggMesh.position.y = 0.65;
+          }
+        }
+      }
+    }
+
+    function releaseGrabbedEgg() {
+      if (!isEggGrabbed) return;
+      isEggGrabbed = false;
+      if (!eggMesh) return;
+
+      eggMesh.scale.set(1.0, 1.0, 1.0);
+      sound.playTone(400, 'sine', 0.06, 0.12);
+
+      const stage = GAME_STATE.currentStage;
+      if (stage === 2) {
+        const distToBasin = Math.hypot(eggMesh.position.x - (-1.2), eggMesh.position.z);
+        const distToCloth = Math.hypot(eggMesh.position.x - 1.2, eggMesh.position.z);
+
+        if (distToBasin < 0.95 || eggMesh.position.x < -0.65) {
+          eggMesh.position.set(-1.2, 0.40, 0);
+        } else if (distToCloth < 0.95 || eggMesh.position.x > 0.65) {
+          eggMesh.position.set(1.2, 0.22, 0);
+        } else {
+          eggMesh.position.set(0, 0.55, 0);
+        }
+      } else if (stage === 5) {
+        eggMesh.position.y = 0.35;
+      } else if (stage === 6) {
+        if (Math.hypot(eggMesh.position.x, eggMesh.position.z) < 0.5) {
+          eggMesh.position.set(0, 0.32, 0);
+        }
+      }
+    }
 
     function initHandTracking() {
       if (typeof Hands === 'undefined') {
@@ -2191,11 +2445,18 @@
         handVelocity = moveDist;
         lastHandPos = { x: cursorX, y: cursorY };
 
-        // Update visual hand cursor
+        // Update visual hand cursor & contextual hover label
         if (cursorEl) {
           cursorEl.style.display = 'block';
           cursorEl.style.left = cursorX + 'px';
           cursorEl.style.top = cursorY + 'px';
+
+          let isNearEgg = false;
+          if (eggMesh && eggMesh.visible && (GAME_STATE.currentStage === 2 || GAME_STATE.currentStage === 4 || GAME_STATE.currentStage === 5 || GAME_STATE.currentStage === 6)) {
+            const eggScreen = getObjectScreenPos(eggMesh);
+            const dist = Math.hypot(cursorX - eggScreen.x, cursorY - eggScreen.y);
+            if (dist < 140) isNearEgg = true;
+          }
 
           if (currentlyPinching) {
             cursorEl.style.borderColor = '#22c55e';
@@ -2204,28 +2465,45 @@
             if (cursorDot) cursorDot.style.backgroundColor = '#22c55e';
             if (cursorLabel) {
               cursorLabel.style.display = 'block';
-              cursorLabel.textContent = '🤏 จีบจับ';
+              cursorLabel.textContent = isEggGrabbed ? '🥚 กำลังถือไข่' : '🤏 จีบจับ';
             }
           } else {
             cursorEl.style.borderColor = '#10b981';
             cursorEl.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
             cursorEl.style.transform = 'translate(-50%, -50%) scale(1.0)';
             if (cursorDot) cursorDot.style.backgroundColor = '#10b981';
-            if (cursorLabel) cursorLabel.style.display = 'none';
+            if (cursorLabel) {
+              if (isNearEgg) {
+                cursorLabel.style.display = 'block';
+                cursorLabel.textContent = '🤏 จีบเพื่อหยิบไข่';
+              } else {
+                cursorLabel.style.display = 'none';
+              }
+            }
           }
         }
 
         // Gesture Actions
         if (currentlyPinching && !lastPinchState) {
-          handlePinchClick(cursorX, cursorY);
+          const grabbed = tryGrabEgg(cursorX, cursorY);
+          if (!grabbed) {
+            handlePinchClick(cursorX, cursorY);
+          }
+        } else if (!currentlyPinching && lastPinchState) {
+          releaseGrabbedEgg();
         }
 
-        handleContinuousHandGestures(cursorX, cursorY, currentlyPinching, moveDist);
+        if (isEggGrabbed) {
+          updateGrabbedEggPosition(cursorX, cursorY, moveDist);
+        } else {
+          handleContinuousHandGestures(cursorX, cursorY, currentlyPinching, moveDist);
+        }
 
         lastPinchState = currentlyPinching;
         isPinching = currentlyPinching;
       } else {
         if (cursorEl) cursorEl.style.display = 'none';
+        if (isEggGrabbed) releaseGrabbedEgg();
         isPinching = false;
         lastPinchState = false;
       }
@@ -2299,7 +2577,7 @@
       const now = Date.now();
       const stage = GAME_STATE.currentStage;
 
-      // Stage 2: Rubbing to wash & dry
+      // Stage 2: Rubbing fallback
       if (stage === 2) {
         if (moveDist > 12 && now - lastActionTime > 180) {
           lastActionTime = now;
@@ -2469,6 +2747,36 @@
        ========================================================== */
     window.addEventListener('DOMContentLoaded', () => {
       init3D();
+
+      // Mouse & Touch 3D Egg Dragging Support
+      if (renderer && renderer.domElement) {
+        renderer.domElement.addEventListener('pointerdown', (e) => {
+          const rect = renderer.domElement.getBoundingClientRect();
+          const screenX = e.clientX - rect.left;
+          const screenY = e.clientY - rect.top;
+          if (tryGrabEgg(screenX, screenY)) {
+            isPointerDragging = true;
+            if (controls) controls.enabled = false;
+          }
+        });
+
+        window.addEventListener('pointermove', (e) => {
+          if (isPointerDragging && isEggGrabbed) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            const screenX = e.clientX - rect.left;
+            const screenY = e.clientY - rect.top;
+            updateGrabbedEggPosition(screenX, screenY);
+          }
+        });
+
+        window.addEventListener('pointerup', () => {
+          if (isPointerDragging) {
+            isPointerDragging = false;
+            releaseGrabbedEgg();
+            if (controls) controls.enabled = true;
+          }
+        });
+      }
 
       document.getElementById('btn-audio-toggle').addEventListener('click', () => {
         const isMuted = sound.toggleMute();

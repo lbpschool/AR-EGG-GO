@@ -989,6 +989,10 @@
        ========================================================== */
     let scene, camera, renderer, controls;
     let tableGroup, eggMesh, waterBasinMesh, clothMesh, bowlMesh, huskTrayMesh, eggCartonMesh;
+    let dinContainerMesh, saltContainerMesh, waterContainerMesh;
+    let grabbedIngredient = null;
+    let isIngredientGrabbed = false;
+    let lastPourTime = 0;
     let stage1Eggs = [];
     let pasteLiquidMesh;
 
@@ -1145,6 +1149,35 @@
       return geo;
     }
 
+    function makeTextSprite(message, bgColor = '#1f2937') {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 72;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = bgColor;
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(6, 6, 244, 60, 16);
+      } else {
+        ctx.rect(6, 6, 244, 60);
+      }
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      ctx.font = 'bold 28px Prompt, sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(message, 128, 36);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
+      const sprite = new THREE.Sprite(spriteMat);
+      sprite.scale.set(0.7, 0.2, 1);
+      return sprite;
+    }
+
     function createProceduralObjects() {
       const eggGeo = createEggGeometry();
 
@@ -1208,6 +1241,92 @@
       eggCartonMesh.position.set(0, 0.22, 0);
       eggCartonMesh.visible = false;
       scene.add(eggCartonMesh);
+
+      // --- 3D INGREDIENTS FOR STAGE 3 ---
+      // 1. Din Sor Phong Bowl (White Clay)
+      dinContainerMesh = new THREE.Group();
+      const dinBowlGeo = new THREE.CylinderGeometry(0.38, 0.24, 0.26, 24);
+      const dinBowlMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.6 });
+      const dinBowl = new THREE.Mesh(dinBowlGeo, dinBowlMat);
+      dinBowl.castShadow = true;
+      dinContainerMesh.add(dinBowl);
+
+      const dinPowderGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.08, 24);
+      const dinPowderMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.8 });
+      const dinPowder = new THREE.Mesh(dinPowderGeo, dinPowderMat);
+      dinPowder.position.y = 0.1;
+      dinContainerMesh.add(dinPowder);
+
+      const lumpGeo = new THREE.SphereGeometry(0.09, 12, 12);
+      const lumpMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85 });
+      const lump1 = new THREE.Mesh(lumpGeo, lumpMat);
+      lump1.position.set(-0.08, 0.18, -0.05);
+      const lump2 = new THREE.Mesh(lumpGeo, lumpMat);
+      lump2.position.set(0.09, 0.17, 0.04);
+      const lump3 = new THREE.Mesh(lumpGeo, lumpMat);
+      lump3.position.set(0.01, 0.21, 0.02);
+      dinContainerMesh.add(lump1, lump2, lump3);
+
+      const dinLabel = makeTextSprite('⚪ ดินสอพอง', '#0f766e');
+      dinLabel.position.y = 0.52;
+      dinContainerMesh.add(dinLabel);
+
+      dinContainerMesh.position.set(-1.35, 0.25, 0.15);
+      dinContainerMesh.userData = { type: 'din', name: 'ดินสอพอง', homeX: -1.35, homeY: 0.25, homeZ: 0.15 };
+      dinContainerMesh.visible = false;
+      scene.add(dinContainerMesh);
+
+      // 2. Salt Shaker / Jar
+      saltContainerMesh = new THREE.Group();
+      const saltJarGeo = new THREE.CylinderGeometry(0.24, 0.26, 0.38, 24);
+      const saltJarMat = new THREE.MeshStandardMaterial({ color: 0xe0f2fe, roughness: 0.2, transparent: true, opacity: 0.85 });
+      const saltJar = new THREE.Mesh(saltJarGeo, saltJarMat);
+      saltJar.castShadow = true;
+      saltContainerMesh.add(saltJar);
+
+      const saltCapGeo = new THREE.CylinderGeometry(0.2, 0.24, 0.09, 24);
+      const saltCapMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.3, metalness: 0.7 });
+      const saltCap = new THREE.Mesh(saltCapGeo, saltCapMat);
+      saltCap.position.y = 0.22;
+      saltContainerMesh.add(saltCap);
+
+      const saltInsideGeo = new THREE.CylinderGeometry(0.21, 0.23, 0.26, 24);
+      const saltInsideMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 });
+      const saltInside = new THREE.Mesh(saltInsideGeo, saltInsideMat);
+      saltInside.position.y = -0.04;
+      saltContainerMesh.add(saltInside);
+
+      const saltLabel = makeTextSprite('🧂 เกลือป่น', '#b45309');
+      saltLabel.position.y = 0.52;
+      saltContainerMesh.add(saltLabel);
+
+      saltContainerMesh.position.set(1.35, 0.25, -0.35);
+      saltContainerMesh.userData = { type: 'salt', name: 'เกลือป่น', homeX: 1.35, homeY: 0.25, homeZ: -0.35 };
+      saltContainerMesh.visible = false;
+      scene.add(saltContainerMesh);
+
+      // 3. Water Pitcher / Cup
+      waterContainerMesh = new THREE.Group();
+      const waterPitcherGeo = new THREE.CylinderGeometry(0.26, 0.2, 0.38, 24);
+      const waterPitcherMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.3 });
+      const waterPitcher = new THREE.Mesh(waterPitcherGeo, waterPitcherMat);
+      waterPitcher.castShadow = true;
+      waterContainerMesh.add(waterPitcher);
+
+      const waterInsideGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.05, 24);
+      const waterInsideMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, transparent: true, opacity: 0.85 });
+      const waterInside = new THREE.Mesh(waterInsideGeo, waterInsideMat);
+      waterInside.position.y = 0.15;
+      waterContainerMesh.add(waterInside);
+
+      const waterLabel = makeTextSprite('💧 น้ำสะอาด', '#0369a1');
+      waterLabel.position.y = 0.52;
+      waterContainerMesh.add(waterLabel);
+
+      waterContainerMesh.position.set(1.35, 0.25, 0.45);
+      waterContainerMesh.userData = { type: 'water', name: 'น้ำสะอาด', homeX: 1.35, homeY: 0.25, homeZ: 0.45 };
+      waterContainerMesh.visible = false;
+      scene.add(waterContainerMesh);
 
       setupStage1Eggs();
     }
@@ -1314,6 +1433,9 @@
       if (waterBasinMesh) waterBasinMesh.visible = false;
       if (clothMesh) clothMesh.visible = false;
       if (bowlMesh) bowlMesh.visible = false;
+      if (dinContainerMesh) dinContainerMesh.visible = false;
+      if (saltContainerMesh) saltContainerMesh.visible = false;
+      if (waterContainerMesh) waterContainerMesh.visible = false;
       if (huskTrayMesh) huskTrayMesh.visible = false;
       if (eggCartonMesh) eggCartonMesh.visible = false;
       if (eggMesh) {
@@ -1395,47 +1517,70 @@
 
         case 3:
           badgeText.textContent = 'ด่านที่ 3 : สูตรลับ 3 : 1 : 1';
-          setMascot('จำสูตรนี้ไว้นะ! ดินสอพอง 3 ส่วน, เกลือป่น 1 ส่วน, และน้ำสะอาดประมาณ 1 ส่วน จากนั้นนวดให้เหนียวข้นจ้า', 'thinking');
+          setMascot('ใช้ท่าจีบนิ้ว 🤏 หยิบถ้วยดินสอพอง, กระปุกเกลือ, และเหยือกน้ำ ลากไปเอียงเทใส่กาละมังตรงกลางให้ครบสูตร 3:1:1 นะจ๊ะ!', 'happy');
           bowlMesh.visible = true;
-          camera.position.set(0, 2.5, 2.5);
+          if (dinContainerMesh) {
+            dinContainerMesh.visible = true;
+            dinContainerMesh.position.set(-1.35, 0.25, 0.15);
+            dinContainerMesh.rotation.set(0, 0, 0);
+            dinContainerMesh.scale.set(1, 1, 1);
+          }
+          if (saltContainerMesh) {
+            saltContainerMesh.visible = true;
+            saltContainerMesh.position.set(1.35, 0.25, -0.35);
+            saltContainerMesh.rotation.set(0, 0, 0);
+            saltContainerMesh.scale.set(1, 1, 1);
+          }
+          if (waterContainerMesh) {
+            waterContainerMesh.visible = true;
+            waterContainerMesh.position.set(1.35, 0.25, 0.45);
+            waterContainerMesh.rotation.set(0, 0, 0);
+            waterContainerMesh.scale.set(1, 1, 1);
+          }
+          camera.position.set(0, 3.2, 3.4);
+          controls.target.set(0, 0.35, 0);
 
           actionCard.innerHTML = `
             <h3>ภารกิจ: ผสมสูตรลับ 3 : 1 : 1 และนวด</h3>
-            <p style="margin: 4px 0 10px; font-size: 13px; color: #4b5563;">ตวงส่วนผสมใส่ชามให้ตรงสูตร</p>
+            <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 8px 12px; margin: 6px 0; font-size: 13px; color: #065f46; text-align: left; line-height: 1.5;">
+              <b>วิธีเล่น:</b> 🤏 <b>จีบนิ้วหยิบภาชนะส่วนผสมบนโต๊ะ</b> ➔ ลากไปเอียงเทใส่ <b>กาละมังตรงกลาง</b> ให้ครบสูตร (หรือคลิกลากด้วยเมาส์)
+            </div>
 
-            <div class="recipe-shelf">
-              <div class="ingredient-btn" onclick="addIngredient('din')">
+            <div class="recipe-shelf" style="margin: 8px 0;">
+              <div class="ingredient-btn" style="cursor: pointer;" onclick="addIngredient('din')" title="หยิบถ้วยดินสอพองบนโต๊ะไปเทใส่กาละมัง หรือคลิกที่นี่">
                 <div class="ingredient-icon">⚪</div>
                 <div class="ingredient-name">ดินสอพอง</div>
-                <div class="ingredient-count" id="count-din">0 / 3</div>
+                <div class="ingredient-count" id="count-din">${GAME_STATE.stage3.dinSorPhong} / 3</div>
               </div>
-              <div class="ingredient-btn" onclick="addIngredient('salt')">
+              <div class="ingredient-btn" style="cursor: pointer;" onclick="addIngredient('salt')" title="หยิบกระปุกเกลือบนโต๊ะไปเทใส่กาละมัง หรือคลิกที่นี่">
                 <div class="ingredient-icon">🧂</div>
                 <div class="ingredient-name">เกลือป่น</div>
-                <div class="ingredient-count" id="count-salt">0 / 1</div>
+                <div class="ingredient-count" id="count-salt">${GAME_STATE.stage3.salt} / 1</div>
               </div>
-              <div class="ingredient-btn" onclick="addIngredient('water')">
+              <div class="ingredient-btn" style="cursor: pointer;" onclick="addIngredient('water')" title="หยิบเหยือกน้ำบนโต๊ะไปเทใส่กาละมัง หรือคลิกที่นี่">
                 <div class="ingredient-icon">💧</div>
                 <div class="ingredient-name">น้ำสะอาด</div>
-                <div class="ingredient-count" id="count-water">0 / 1</div>
+                <div class="ingredient-count" id="count-water">${GAME_STATE.stage3.water} / 1</div>
               </div>
             </div>
 
-            <div id="knead-interactive-area" style="display: none; border-top: 1px dashed #d1d5db; padding-top: 10px;">
-              <p style="font-weight: 600; font-size: 14px; color: #b45309;">นวดส่วนผสม: ใช้นิ้ววนเป็นวงกลมบนแป้นนี้</p>
+            <div id="knead-interactive-area" style="display: ${GAME_STATE.stage3.dinSorPhong === 3 && GAME_STATE.stage3.salt === 1 && GAME_STATE.stage3.water === 1 ? 'block' : 'none'}; border-top: 1px dashed #d1d5db; padding-top: 10px;">
+              <p style="font-weight: 600; font-size: 14px; color: #b45309;">นวดส่วนผสม: วนมือนวดแป้งในกาละมัง</p>
               <div class="knead-circle-pad" id="knead-pad" onpointermove="handleKnead(event)">
                 <span style="font-size: 32px;">🥣</span>
-                <span style="font-size: 11px; font-weight: 700; color: #92400e;">วนนิ้วตรงนี้</span>
+                <span style="font-size: 11px; font-weight: 700; color: #92400e;">วนนิ้ว/วนมือตรงนี้</span>
               </div>
               <div class="progress-bar-container" style="max-width: 240px; margin: 0 auto;">
-                <div id="knead-progress" class="progress-bar-fill" style="width: 0%;"></div>
+                <div id="knead-progress" class="progress-bar-fill" style="width: ${GAME_STATE.stage3.kneadPercent}%;"></div>
               </div>
-              <div style="font-size: 12px; margin-top: 4px; font-weight: 600;" id="knead-label">ความข้นเหนียว: 0%</div>
+              <div style="font-size: 12px; margin-top: 4px; font-weight: 600;" id="knead-label">ความข้นเหนียว: ${GAME_STATE.stage3.kneadPercent}%</div>
             </div>
 
             <div style="display: flex; gap: 8px; margin-top: 8px;">
               <button class="btn btn-outline" style="flex: 1; font-size: 14px;" onclick="resetRecipe()">↺ ตักใหม่</button>
-              <button id="btn-s3-next" class="btn btn-primary" style="flex: 2; font-size: 14px;" onclick="verifyStage3()" disabled>นวดส่วนผสมก่อน</button>
+              <button id="btn-s3-next" class="btn btn-primary" style="flex: 2; font-size: 14px;" onclick="verifyStage3()" ${GAME_STATE.stage3.kneadDone ? '' : 'disabled'}>
+                ${GAME_STATE.stage3.kneadDone ? 'ไปขั้นตอนต่อไป ➔' : 'นวดส่วนผสมก่อน'}
+              </button>
             </div>
           `;
           break;
@@ -1669,13 +1814,19 @@
       sound.playTone(440, 'triangle', 0.1, 0.15);
       if (type === 'din') {
         GAME_STATE.stage3.dinSorPhong++;
-        document.getElementById('count-din').textContent = GAME_STATE.stage3.dinSorPhong + ' / 3';
+        const el = document.getElementById('count-din');
+        if (el) el.textContent = GAME_STATE.stage3.dinSorPhong + ' / 3';
+        showToast('⚪ เทดินสอพองลงกาละมังแล้ว (' + GAME_STATE.stage3.dinSorPhong + ' / 3)', 1500);
       } else if (type === 'salt') {
         GAME_STATE.stage3.salt++;
-        document.getElementById('count-salt').textContent = GAME_STATE.stage3.salt + ' / 1';
+        const el = document.getElementById('count-salt');
+        if (el) el.textContent = GAME_STATE.stage3.salt + ' / 1';
+        showToast('🧂 เทเกลือป่นลงกาละมังแล้ว (' + GAME_STATE.stage3.salt + ' / 1)', 1500);
       } else if (type === 'water') {
         GAME_STATE.stage3.water++;
-        document.getElementById('count-water').textContent = GAME_STATE.stage3.water + ' / 1';
+        const el = document.getElementById('count-water');
+        if (el) el.textContent = GAME_STATE.stage3.water + ' / 1';
+        showToast('💧 เทน้ำสะอาดลงกาละมังแล้ว (' + GAME_STATE.stage3.water + ' / 1)', 1500);
       }
 
       const din = GAME_STATE.stage3.dinSorPhong;
@@ -1687,16 +1838,21 @@
         GAME_STATE.stageMistakes.stage3++;
         if (GAME_STATE.scores.stage3 > 10) GAME_STATE.scores.stage3 -= 3;
         updateScoreDisplay();
-        showToast('⚠️ สัดส่วนเกินสูตร! สูตรที่ถูกต้องคือ ดินสอพอง 3 : เกลือ 1 : น้ำ 1');
-        setMascot('ตักเกินสูตรแล้วจ้า! ลองกดปุ่ม "ตักใหม่" แล้วใส่ ดินสอพอง 3, เกลือ 1, น้ำ 1 นะ', 'warning');
+        showToast('⚠️ สัดส่วนเกินสูตร! สูตรที่ถูกต้องคือ ดินสอพอง 3 : เกลือ 1 : น้ำ 1 (กดปุ่ม "ตักใหม่")', 3000);
+        setMascot('ตักเกินสูตรแล้วจ้า! ลองกดปุ่ม "↺ ตักใหม่" แล้วเท ดินสอพอง 3, เกลือ 1, น้ำ 1 นะจ๊ะ', 'warning');
         return;
       }
 
       if (din === 3 && salt === 1 && water === 1) {
         sound.playCorrect();
-        showToast('🎉 สัดส่วนถูกต้องครบถ้วน! เริ่มนวดส่วนผสมได้เลย');
-        setMascot('ยอดเยี่ยมมาก! ส่วนผสมครบสูตร 3:1:1 แล้ว ตอนนี้ใช้นิ้ววนเป็นวงกลมเพื่อนวดแป้งเลยจ้า', 'celebrate');
-        document.getElementById('knead-interactive-area').style.display = 'block';
+        showToast('🎉 สัดส่วนถูกต้องครบถ้วน! เริ่มวนมือนวดส่วนผสมในกาละมังได้เลย');
+        setMascot('ยอดเยี่ยมมาก! เทส่วนผสมครบสูตร 3:1:1 แล้ว ตอนนี้วนมือเป็นวงกลมเพื่อนวดแป้งในกาละมังเลยจ้า', 'celebrate');
+        const kneadArea = document.getElementById('knead-interactive-area');
+        if (kneadArea) kneadArea.style.display = 'block';
+        if (pasteLiquidMesh) {
+          pasteLiquidMesh.visible = true;
+          pasteLiquidMesh.scale.set(1, 1, 1);
+        }
       }
     }
 
@@ -1705,12 +1861,44 @@
       GAME_STATE.stage3.salt = 0;
       GAME_STATE.stage3.water = 0;
       GAME_STATE.stage3.kneadPercent = 0;
-      document.getElementById('count-din').textContent = '0 / 3';
-      document.getElementById('count-salt').textContent = '0 / 1';
-      document.getElementById('count-water').textContent = '0 / 1';
-      document.getElementById('knead-interactive-area').style.display = 'none';
-      document.getElementById('btn-s3-next').disabled = true;
-      document.getElementById('btn-s3-next').textContent = 'นวดส่วนผสมก่อน';
+      GAME_STATE.stage3.kneadDone = false;
+      const dEl = document.getElementById('count-din');
+      const sEl = document.getElementById('count-salt');
+      const wEl = document.getElementById('count-water');
+      if (dEl) dEl.textContent = '0 / 3';
+      if (sEl) sEl.textContent = '0 / 1';
+      if (wEl) wEl.textContent = '0 / 1';
+
+      const kneadArea = document.getElementById('knead-interactive-area');
+      if (kneadArea) kneadArea.style.display = 'none';
+      const kneadProg = document.getElementById('knead-progress');
+      if (kneadProg) kneadProg.style.width = '0%';
+      const kneadLbl = document.getElementById('knead-label');
+      if (kneadLbl) kneadLbl.textContent = 'ความข้นเหนียว: 0%';
+
+      const nextBtn = document.getElementById('btn-s3-next');
+      if (nextBtn) {
+        nextBtn.disabled = true;
+        nextBtn.textContent = 'นวดส่วนผสมก่อน';
+      }
+
+      if (dinContainerMesh) {
+        dinContainerMesh.position.set(-1.35, 0.25, 0.15);
+        dinContainerMesh.rotation.set(0, 0, 0);
+        dinContainerMesh.scale.set(1, 1, 1);
+      }
+      if (saltContainerMesh) {
+        saltContainerMesh.position.set(1.35, 0.25, -0.35);
+        saltContainerMesh.rotation.set(0, 0, 0);
+        saltContainerMesh.scale.set(1, 1, 1);
+      }
+      if (waterContainerMesh) {
+        waterContainerMesh.position.set(1.35, 0.25, 0.45);
+        waterContainerMesh.rotation.set(0, 0, 0);
+        waterContainerMesh.scale.set(1, 1, 1);
+      }
+      if (pasteLiquidMesh) pasteLiquidMesh.visible = false;
+      showToast('↺ เริ่มตักส่วนผสมใหม่');
     }
 
     let lastKneadTime = 0;
@@ -2231,11 +2419,90 @@
       }
     }
 
+    function spawnPowderParticles(x, y, z) {
+      for (let i = 0; i < 7; i++) {
+        const geo = new THREE.SphereGeometry(0.045, 8, 8);
+        const mat = new THREE.MeshBasicMaterial({ color: 0xf8fafc, transparent: true, opacity: 0.9 });
+        const p = new THREE.Mesh(geo, mat);
+        p.position.set(x + (Math.random() - 0.5) * 0.2, y, z + (Math.random() - 0.5) * 0.2);
+        p.userData = {
+          vx: (Math.random() - 0.5) * 0.02,
+          vy: -0.04 - Math.random() * 0.03,
+          vz: (Math.random() - 0.5) * 0.02,
+          life: 0.9
+        };
+        scene.add(p);
+        vfxParticles.push(p);
+      }
+    }
+
+    function spawnSaltParticles(x, y, z) {
+      for (let i = 0; i < 7; i++) {
+        const geo = new THREE.SphereGeometry(0.03, 6, 6);
+        const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 });
+        const p = new THREE.Mesh(geo, mat);
+        p.position.set(x + (Math.random() - 0.5) * 0.15, y, z + (Math.random() - 0.5) * 0.15);
+        p.userData = {
+          vx: (Math.random() - 0.5) * 0.02,
+          vy: -0.045 - Math.random() * 0.035,
+          vz: (Math.random() - 0.5) * 0.02,
+          life: 0.85
+        };
+        scene.add(p);
+        vfxParticles.push(p);
+      }
+    }
+
+    function spawnWaterStreamParticles(x, y, z) {
+      for (let i = 0; i < 7; i++) {
+        const geo = new THREE.SphereGeometry(0.035, 8, 8);
+        const mat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.85 });
+        const p = new THREE.Mesh(geo, mat);
+        p.position.set(x + (Math.random() - 0.5) * 0.15, y, z + (Math.random() - 0.5) * 0.15);
+        p.userData = {
+          vx: (Math.random() - 0.5) * 0.02,
+          vy: -0.05 - Math.random() * 0.04,
+          vz: (Math.random() - 0.5) * 0.02,
+          life: 0.9
+        };
+        scene.add(p);
+        vfxParticles.push(p);
+      }
+    }
+
     function tryGrabEgg(screenX, screenY) {
       const stage = GAME_STATE.currentStage;
+
+      // Stage 3: Grab 3D Ingredient Containers (ดินสอพอง, เกลือ, น้ำ)
+      if (stage === 3) {
+        const containers = [dinContainerMesh, saltContainerMesh, waterContainerMesh];
+        for (const c of containers) {
+          if (!c || !c.visible) continue;
+          const raycaster = new THREE.Raycaster();
+          const mouseNDC = new THREE.Vector2(
+            (screenX / window.innerWidth) * 2 - 1,
+            -(screenY / window.innerHeight) * 2 + 1
+          );
+          raycaster.setFromCamera(mouseNDC, camera);
+          const intersects = raycaster.intersectObjects(c.children, true);
+          const screenPos = getObjectScreenPos(c);
+          const screenDist = Math.hypot(screenX - screenPos.x, screenY - screenPos.y);
+
+          if (intersects.length > 0 || screenDist < 140) {
+            grabbedIngredient = c;
+            isIngredientGrabbed = true;
+            sound.playTone(550, 'sine', 0.08, 0.18);
+            c.scale.set(1.15, 1.15, 1.15);
+            showToast('🤏 หยิบ ' + c.userData.name + ' แล้ว! ลากไปเอียงเทใส่กาละมังตรงกลาง', 1800);
+            return true;
+          }
+        }
+        return false;
+      }
+
+      // Stages 2, 4, 5, 6: Grab Egg
       if (!eggMesh || !eggMesh.visible) return false;
 
-      // Draggable in Stages 2, 4, 5, 6
       if (stage === 2 || stage === 4 || stage === 5 || stage === 6) {
         const raycaster = new THREE.Raycaster();
         const mouseNDC = new THREE.Vector2(
@@ -2266,9 +2533,51 @@
     }
 
     function updateGrabbedEggPosition(screenX, screenY, moveDist = 0) {
-      if (!isEggGrabbed || !eggMesh) return;
       const stage = GAME_STATE.currentStage;
       const now = Date.now();
+
+      // Stage 3: Moving & Pouring Ingredient into Basin
+      if (stage === 3 && isIngredientGrabbed && grabbedIngredient) {
+        const pt = getPointOnPlane(screenX, screenY, 0.75);
+        if (pt) {
+          const targetX = Math.max(-1.7, Math.min(1.7, pt.x));
+          const targetZ = Math.max(-0.9, Math.min(0.9, pt.z));
+
+          grabbedIngredient.position.x += (targetX - grabbedIngredient.position.x) * 0.45;
+          grabbedIngredient.position.z += (targetZ - grabbedIngredient.position.z) * 0.45;
+
+          const distToBowl = Math.hypot(grabbedIngredient.position.x, grabbedIngredient.position.z);
+
+          // Over Mixing Basin (Center, distToBowl < 0.85)
+          if (distToBowl < 0.85) {
+            grabbedIngredient.position.y = 0.58;
+            const tiltDir = grabbedIngredient.position.x <= 0 ? -1 : 1;
+            grabbedIngredient.rotation.z = tiltDir * 0.85;
+            grabbedIngredient.rotation.x = -0.3;
+
+            if (now - lastPourTime > 1100) {
+              lastPourTime = now;
+              const type = grabbedIngredient.userData.type;
+              if (type === 'din') {
+                spawnPowderParticles(grabbedIngredient.position.x, 0.48, grabbedIngredient.position.z);
+                addIngredient('din');
+              } else if (type === 'salt') {
+                spawnSaltParticles(grabbedIngredient.position.x, 0.48, grabbedIngredient.position.z);
+                addIngredient('salt');
+              } else if (type === 'water') {
+                spawnWaterStreamParticles(grabbedIngredient.position.x, 0.48, grabbedIngredient.position.z);
+                addIngredient('water');
+              }
+            }
+          } else {
+            grabbedIngredient.position.y = 0.75;
+            grabbedIngredient.rotation.set(0, 0, 0);
+          }
+        }
+        return;
+      }
+
+      if (!isEggGrabbed || !eggMesh) return;
 
       if (stage === 2) {
         const pt = getPointOnPlane(screenX, screenY, 0.75);
@@ -2348,6 +2657,20 @@
     }
 
     function releaseGrabbedEgg() {
+      if (isIngredientGrabbed && grabbedIngredient) {
+        isIngredientGrabbed = false;
+        grabbedIngredient.scale.set(1.0, 1.0, 1.0);
+        grabbedIngredient.rotation.set(0, 0, 0);
+        sound.playTone(380, 'sine', 0.06, 0.12);
+
+        const homeX = grabbedIngredient.userData.homeX;
+        const homeY = grabbedIngredient.userData.homeY;
+        const homeZ = grabbedIngredient.userData.homeZ;
+        grabbedIngredient.position.set(homeX, homeY, homeZ);
+        grabbedIngredient = null;
+        return;
+      }
+
       if (!isEggGrabbed) return;
       isEggGrabbed = false;
       if (!eggMesh) return;
@@ -2451,11 +2774,30 @@
           cursorEl.style.left = cursorX + 'px';
           cursorEl.style.top = cursorY + 'px';
 
-          let isNearEgg = false;
+          let isNearInteractable = false;
+          let hoverText = '🤏 จีบจับ';
+
           if (eggMesh && eggMesh.visible && (GAME_STATE.currentStage === 2 || GAME_STATE.currentStage === 4 || GAME_STATE.currentStage === 5 || GAME_STATE.currentStage === 6)) {
             const eggScreen = getObjectScreenPos(eggMesh);
             const dist = Math.hypot(cursorX - eggScreen.x, cursorY - eggScreen.y);
-            if (dist < 140) isNearEgg = true;
+            if (dist < 140) {
+              isNearInteractable = true;
+              hoverText = '🤏 จีบเพื่อหยิบไข่';
+            }
+          }
+
+          if (GAME_STATE.currentStage === 3) {
+            const containers = [dinContainerMesh, saltContainerMesh, waterContainerMesh];
+            for (const c of containers) {
+              if (c && c.visible) {
+                const sp = getObjectScreenPos(c);
+                if (Math.hypot(cursorX - sp.x, cursorY - sp.y) < 140) {
+                  isNearInteractable = true;
+                  hoverText = '🤏 จีบเพื่อหยิบ ' + c.userData.name;
+                  break;
+                }
+              }
+            }
           }
 
           if (currentlyPinching) {
@@ -2465,7 +2807,13 @@
             if (cursorDot) cursorDot.style.backgroundColor = '#22c55e';
             if (cursorLabel) {
               cursorLabel.style.display = 'block';
-              cursorLabel.textContent = isEggGrabbed ? '🥚 กำลังถือไข่' : '🤏 จีบจับ';
+              if (isIngredientGrabbed && grabbedIngredient) {
+                cursorLabel.textContent = '🥣 เท ' + grabbedIngredient.userData.name;
+              } else if (isEggGrabbed) {
+                cursorLabel.textContent = '🥚 กำลังถือไข่';
+              } else {
+                cursorLabel.textContent = '🤏 จีบจับ';
+              }
             }
           } else {
             cursorEl.style.borderColor = '#10b981';
@@ -2473,9 +2821,9 @@
             cursorEl.style.transform = 'translate(-50%, -50%) scale(1.0)';
             if (cursorDot) cursorDot.style.backgroundColor = '#10b981';
             if (cursorLabel) {
-              if (isNearEgg) {
+              if (isNearInteractable) {
                 cursorLabel.style.display = 'block';
-                cursorLabel.textContent = '🤏 จีบเพื่อหยิบไข่';
+                cursorLabel.textContent = hoverText;
               } else {
                 cursorLabel.style.display = 'none';
               }
@@ -2493,7 +2841,7 @@
           releaseGrabbedEgg();
         }
 
-        if (isEggGrabbed) {
+        if (isEggGrabbed || isIngredientGrabbed) {
           updateGrabbedEggPosition(cursorX, cursorY, moveDist);
         } else {
           handleContinuousHandGestures(cursorX, cursorY, currentlyPinching, moveDist);
@@ -2503,7 +2851,7 @@
         isPinching = currentlyPinching;
       } else {
         if (cursorEl) cursorEl.style.display = 'none';
-        if (isEggGrabbed) releaseGrabbedEgg();
+        if (isEggGrabbed || isIngredientGrabbed) releaseGrabbedEgg();
         isPinching = false;
         lastPinchState = false;
       }

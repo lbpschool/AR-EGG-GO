@@ -1,0 +1,2278 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AR Salted Egg Challenge : ภารกิจพิชิตไข่เค็มดินสอพอง</title>
+  
+  <!-- Google Fonts: Prompt & Sarabun -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Three.js and OrbitControls and Confetti -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #2e7d32;
+      --primary-light: #4caf50;
+      --primary-dark: #1b5e20;
+      --accent: #f59e0b;
+      --accent-light: #fbbf24;
+      --danger: #ef4444;
+      --bg-warm: #fefce8;
+      --card-bg: rgba(255, 255, 255, 0.96);
+      --text-dark: #1f2937;
+      --text-muted: #4b5563;
+      --border-radius: 20px;
+      --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Prompt', 'Sarabun', sans-serif;
+      background: #111827;
+      color: var(--text-dark);
+    }
+
+    #webgl-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    #ui-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .interactive {
+      pointer-events: auto;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 100%);
+      color: white;
+    }
+
+    .game-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(8px);
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 15px;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .top-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .icon-btn:active {
+      transform: scale(0.92);
+    }
+
+    .mascot-container {
+      margin: 10px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      animation: slideDown 0.4s ease-out;
+    }
+
+    @keyframes slideDown {
+      from { transform: translateY(-30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .mascot-avatar {
+      width: 76px;
+      height: 76px;
+      background: #fef08a;
+      border: 3px solid #f59e0b;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+      flex-shrink: 0;
+      position: relative;
+      animation: floatEgg 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes floatEgg {
+      0% { transform: translateY(0px) rotate(-3deg); }
+      100% { transform: translateY(-8px) rotate(3deg); }
+    }
+
+    .mascot-avatar-inner {
+      font-size: 42px;
+    }
+
+    .mascot-bubble {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      padding: 14px 18px;
+      border-radius: 20px;
+      border-top-left-radius: 4px;
+      box-shadow: var(--shadow-lg);
+      border: 2px solid #fed7aa;
+      flex-grow: 1;
+      max-width: 600px;
+    }
+
+    .mascot-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ea580c;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .mascot-text {
+      font-size: 16px;
+      line-height: 1.45;
+      font-weight: 500;
+      color: var(--text-dark);
+    }
+
+    .bottom-panel {
+      padding: 16px 18px;
+      background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .action-card {
+      background: var(--card-bg);
+      width: 100%;
+      max-width: 580px;
+      padding: 16px 20px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid rgba(255,255,255,0.6);
+      text-align: center;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 16px;
+      background: #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 8px 0;
+      border: 1px solid #d1d5db;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #059669);
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 10px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      font-size: 17px;
+      font-weight: 600;
+      border-radius: 16px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-family: inherit;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+      color: white;
+    }
+
+    .btn-accent {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+    }
+
+    .btn-outline {
+      background: white;
+      color: #374151;
+      border: 2px solid #e5e7eb;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-lg {
+      width: 100%;
+      padding: 15px 24px;
+      font-size: 19px;
+    }
+
+    .modal-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      background: white;
+      border-radius: 28px;
+      padding: 28px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      text-align: center;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #111827;
+      margin-bottom: 8px;
+    }
+
+    .modal-desc {
+      font-size: 15px;
+      color: #4b5563;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .form-group {
+      text-align: left;
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: 14px;
+      border: 2px solid #e5e7eb;
+      font-size: 16px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus {
+      border-color: #10b981;
+      background: #f0fdf4;
+    }
+
+    .cards-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .step-card {
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: 14px;
+      padding: 12px;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .step-card.selected {
+      background: #dcfce7;
+      border: 2px solid #10b981;
+      color: #065f46;
+      transform: scale(1.02);
+    }
+
+    .recipe-shelf {
+      display: flex;
+      justify-content: space-around;
+      margin: 14px 0;
+      gap: 10px;
+    }
+
+    .ingredient-btn {
+      flex: 1;
+      background: #f9fafb;
+      border: 2px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .ingredient-btn:active {
+      transform: scale(0.95);
+      background: #eef2ff;
+    }
+
+    .ingredient-icon {
+      font-size: 30px;
+    }
+    .ingredient-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .ingredient-count {
+      font-size: 14px;
+      font-weight: 700;
+      color: #047857;
+      background: #d1fae5;
+      padding: 2px 10px;
+      border-radius: 12px;
+    }
+
+    .knead-circle-pad {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 4px dashed #f59e0b;
+      background: radial-gradient(circle, #fef3c7 0%, #fed7aa 100%);
+      margin: 12px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      cursor: grab;
+      touch-action: none;
+      position: relative;
+    }
+    .knead-circle-pad:active {
+      cursor: grabbing;
+      transform: scale(0.98);
+    }
+
+    .stars-row {
+      font-size: 40px;
+      color: #f59e0b;
+      margin: 10px 0;
+      letter-spacing: 4px;
+    }
+
+    .table-responsive {
+      max-height: 280px;
+      overflow-y: auto;
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+      margin: 14px 0;
+    }
+
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    table.data-table th {
+      background: #1b5e20;
+      color: white;
+      padding: 10px 8px;
+      position: sticky;
+      top: 0;
+    }
+    table.data-table td {
+      padding: 8px 8px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    table.data-table tr:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    #ar-reticle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px;
+      height: 80px;
+      border: 3px dashed #10b981;
+      border-radius: 50%;
+      pointer-events: none;
+      display: none;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.6; }
+      50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.6; }
+    }
+
+    .badge-pill {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 10px;
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+
+    #toast-msg {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(17, 24, 39, 0.92);
+      color: white;
+      padding: 10px 22px;
+      border-radius: 30px;
+      font-size: 15px;
+      font-weight: 600;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      max-width: 90%;
+      text-align: center;
+    }
+    #toast-msg.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <!-- Real Camera Feed for AR -->
+  <video id="camera-feed" autoplay playsinline muted style="position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none;pointer-events:none;"></video>
+
+  <!-- Three.js Canvas Container -->
+  <div id="webgl-container"></div>
+  <div id="ar-reticle"></div>
+
+  <!-- Toast Notification -->
+  <div id="toast-msg">ข้อความแจ้งเตือน</div>
+
+  <!-- UI Interactive Layer -->
+  <div id="ui-layer">
+    
+    <!-- Top Information Bar -->
+    <div class="top-bar interactive">
+      <div class="game-badge">
+        <span id="stage-badge-icon">🥚</span>
+        <span id="stage-badge-text">ด่านที่ 1 : นักคัดไข่มือโปร</span>
+      </div>
+
+      <div class="top-controls">
+        <div class="game-badge" style="background: rgba(245, 158, 11, 0.25); border-color: #f59e0b;">
+          <span>⭐</span>
+          <span id="score-display">0 / 100</span>
+        </div>
+        <button id="btn-audio-toggle" class="icon-btn" title="เปิด/ปิดเสียง">🔊</button>
+        <button id="btn-mode-toggle" class="icon-btn" title="สลับมุมมอง 3D / AR">🔄</button>
+        <button id="btn-help-hint" class="icon-btn" style="background: #fef08a; color: #b45309;" title="ขอคำใบ้">💡</button>
+      </div>
+    </div>
+
+    <!-- Mascot Speech Area -->
+    <div class="mascot-container interactive">
+      <div class="mascot-avatar" id="mascot-icon-wrapper">
+        <div class="mascot-avatar-inner">🥚</div>
+      </div>
+      <div class="mascot-bubble">
+        <div class="mascot-name" id="mascot-speaker-name">น้องไข่เค็มดินสอพอง</div>
+        <div class="mascot-text" id="mascot-dialogue-text">
+          สวัสดีจ้า! ยินดีต้อนรับสู่ภารกิจพิชิตไข่เค็มดินสอพอง เรามาเริ่มคัดเลือกไข่เป็ดคุณภาพดีกันเถอะ!
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Interactive Control Area -->
+    <div class="bottom-panel interactive">
+      <div class="action-card" id="dynamic-action-card">
+        <h3 id="card-action-title">กำลังโหลด...</h3>
+        <p id="card-action-desc">เตรียมความพร้อมสักครู่</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Fullscreen Modal 1: Welcome & Student Login -->
+  <div id="modal-welcome" class="modal-backdrop">
+    <div class="modal-box">
+      <div style="font-size: 54px; margin-bottom: 8px;">🥚✨</div>
+      <h2 class="modal-title">AR Salted Egg Challenge</h2>
+      <p style="font-size: 16px; font-weight: 600; color: #059669; margin-bottom: 6px;">ภารกิจพิชิตไข่เค็มดินสอพอง</p>
+      <p class="modal-desc">
+        เรียนรู้และฝึกปฏิบัติการทำไข่เค็มดินสอพองด้วยตนเองผ่านกิจกรรม 3D และ AR เสมือนจริง
+      </p>
+
+      <div class="form-group">
+        <label class="form-label">ชื่อ - นามสกุล นักเรียน</label>
+        <input type="text" id="input-student-name" class="form-input" placeholder="เช่น ด.ช.สมชาย ใจดี" required>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <div class="form-group" style="flex: 1;">
+          <label class="form-label">เลขที่</label>
+          <input type="number" id="input-student-no" class="form-input" placeholder="เช่น 12">
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label class="form-label">ชั้น / ห้อง</label>
+          <input type="text" id="input-student-class" class="form-input" placeholder="เช่น ม.2/1">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">เลือกรูปแบบการแสดงผล</label>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" id="select-mode-3d" class="btn btn-primary" style="flex: 1; font-size: 14px; padding: 10px;">
+            🖥️ 3D จำลองบนจอ
+          </button>
+          <button type="button" id="select-mode-ar" class="btn btn-outline" style="flex: 1; font-size: 14px; padding: 10px;">
+            📱 กล้อง AR วางโต๊ะ
+          </button>
+        </div>
+      </div>
+
+      <button id="btn-start-game" class="btn btn-primary btn-lg" style="margin-top: 10px;">
+        🚀 เริ่มต้นภารกิจ
+      </button>
+
+      <div style="margin-top: 18px; border-top: 1px solid #e5e7eb; padding-top: 12px;">
+        <button id="btn-open-teacher-mode" style="background: none; border: none; color: #6b7280; font-size: 13px; cursor: pointer; text-decoration: underline;">
+          🔒 เข้าสู่โหมดคุณครู (Teacher Dashboard)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Modal 2: Summary / Report Card -->
+  <div id="modal-summary" class="modal-backdrop" style="display: none;">
+    <div class="modal-box" style="max-width: 550px;">
+      <div style="font-size: 48px;">🏆🎉</div>
+      <h2 class="modal-title">สรุปผลการเรียนรู้</h2>
+      <p style="font-weight: 600; color: #4b5563;" id="summary-student-label">ด.ช.สมชาย ใจดี (ม.2/1 เลขที่ 12)</p>
+
+      <div class="stars-row" id="summary-stars">⭐⭐⭐</div>
+      <div style="font-size: 32px; font-weight: 800; color: #10b981; margin-bottom: 4px;">
+        <span id="summary-total-score">95</span> <span style="font-size: 18px; color: #6b7280;">/ 100 คะแนน</span>
+      </div>
+      <p id="summary-grade-text" style="font-size: 16px; font-weight: 600; color: #047857; margin-bottom: 14px;">ยอดเยี่ยมมาก! คุณผ่านเกณฑ์ระดับ 3 ดาว</p>
+
+      <div style="background: #f8fafc; border-radius: 16px; padding: 14px; margin-bottom: 16px; text-align: left; font-size: 14px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span>⏱️ เวลาที่ใช้:</span> <strong id="summary-time-spent">2 นาที 15 วินาที</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span>💡 ขอคำใบ้ช่วยเหลือ:</span> <strong id="summary-hints-used">0 ครั้ง</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span>🌟 ด่านที่ทำได้ดีที่สุด:</span> <strong id="summary-best-stage" style="color: #059669;">สูตรลับ 3:1:1</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>📌 ข้อเสนอแนะพัฒนา:</span> <strong id="summary-weak-point" style="color: #ea580c;">ฝึกหมุนไข่พอกให้ทั่ว</strong>
+        </div>
+      </div>
+
+      <!-- Sync Status -->
+      <div id="sheet-sync-status" style="font-size: 13px; color: #059669; margin-bottom: 14px; font-weight: 600;">
+        ☁️ กำลังบันทึกคะแนนลง Google Sheet...
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button id="btn-go-sorting" class="btn btn-accent btn-lg">
+          🧩 มินิเกมเรียงการ์ด 6 ขั้นตอน รับ Badge
+        </button>
+        <div style="display: flex; gap: 8px;">
+          <button id="btn-show-review" class="btn btn-outline" style="flex: 1;">
+            📖 ทบทวนขั้นตอน
+          </button>
+          <button id="btn-restart-game" class="btn btn-primary" style="flex: 1;">
+            🔄 เล่นใหม่อีกครั้ง
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Modal 3: Card Sorting Challenge -->
+  <div id="modal-card-sorting" class="modal-backdrop" style="display: none;">
+    <div class="modal-box" style="max-width: 560px;">
+      <div style="font-size: 44px;">🧩🎴</div>
+      <h2 class="modal-title">ภารกิจจัดเรียง 6 ขั้นตอน</h2>
+      <p class="modal-desc">
+        แตะเลือกการ์ดขั้นตอนการทำไข่เค็มดินสอพอง เรียงตามลำดับจากขั้นที่ 1 ไปจนถึงขั้นที่ 6 ให้ถูกต้อง!
+      </p>
+
+      <div style="margin-bottom: 10px; font-weight: 600; font-size: 14px; color: #059669;">
+        ขั้นตอนที่กำลังจะเลือก: <span id="current-sort-step" class="badge-pill">ลำดับที่ 1</span>
+      </div>
+
+      <!-- Selected Sequence Display -->
+      <div id="sorted-sequence-list" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; text-align: left;">
+      </div>
+
+      <!-- Card Pool -->
+      <div class="cards-container" id="cards-pool">
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 14px;">
+        <button id="btn-reset-sorting" class="btn btn-outline" style="flex: 1;">
+          ↺ เริ่มเรียงใหม่
+        </button>
+        <button id="btn-verify-sorting" class="btn btn-primary" style="flex: 1;">
+          ✓ ตรวจคำตอบ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Modal 4: Digital Badge Award -->
+  <div id="modal-badge-award" class="modal-backdrop" style="display: none;">
+    <div class="modal-box" style="max-width: 480px; background: linear-gradient(180deg, #ffffff 0%, #fefce8 100%);">
+      <div style="font-size: 64px;">🏅</div>
+      <h2 class="modal-title" style="color: #b45309;">ยอดเยี่ยมที่สุด!</h2>
+      <p style="font-size: 17px; font-weight: 700; color: #15803d; margin-bottom: 8px;">
+        คุณจำขั้นตอนการทำไข่เค็มดินสอพองได้ครบถ้วนแล้ว
+      </p>
+
+      <div style="background: white; border: 3px dashed #f59e0b; border-radius: 20px; padding: 20px; margin: 16px 0; box-shadow: 0 10px 20px rgba(245, 158, 11, 0.15);">
+        <div style="font-size: 40px; margin-bottom: 6px;">🥚👑</div>
+        <div style="font-size: 19px; font-weight: 800; color: #92400e;">Salted Egg Master</div>
+        <div style="font-size: 15px; font-weight: 600; color: #047857; margin-top: 4px;">นักทำไข่เค็มดินสอพองมือโปร</div>
+        <div style="font-size: 13px; color: #6b7280; margin-top: 8px;" id="badge-student-details">มอบให้แก่: สมชาย ใจดี</div>
+      </div>
+
+      <button id="btn-badge-done" class="btn btn-primary btn-lg">
+        🎉 กลับสู่หน้าสรุปผล
+      </button>
+    </div>
+  </div>
+
+  <!-- Fullscreen Modal 5: Knowledge Review -->
+  <div id="modal-review" class="modal-backdrop" style="display: none;">
+    <div class="modal-box" style="max-width: 540px; text-align: left;">
+      <h2 class="modal-title" style="text-align: center;">📖 ทบทวน 6 ขั้นตอนหลัก</h2>
+      <p class="modal-desc" style="text-align: center;">กระบวนการทำไข่เค็มดินสอพองมาตรฐานภูมิปัญญาไทย</p>
+
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; font-size: 14px;">
+        <div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 10px 14px; border-radius: 8px;">
+          <strong>1. คัดไข่เป็ด:</strong> เลือกไข่ที่สด เปลือกสะอาด ไร้รอยแตกร้าว เพื่อไม่ให้น้ำเกลือซึมเข้าเร็วเกินไปจนเน่าเสีย
+        </div>
+        <div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 10px 14px; border-radius: 8px;">
+          <strong>2. ล้างและเช็ดให้แห้ง:</strong> ล้างคราบสกปรกออกด้วยน้ำสะอาด และต้องเช็ดให้แห้งสนิทเพื่อป้องกันเชื้อรา
+        </div>
+        <div style="background: #fefce8; border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 8px;">
+          <strong>3. ผสมสูตร 3 : 1 : 1:</strong> ดินสอพอง 3 ส่วน : เกลือป่น 1 ส่วน : น้ำสะอาด 1 ส่วน นวดให้เนียนเหนียวข้น
+        </div>
+        <div style="background: #fefce8; border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 8px;">
+          <strong>4. พอกไข่ให้ทั่ว:</strong> ปาดดินสอพองเคลือบให้หนาสม่ำเสมอทั่วทุกมุม 360 องศา
+        </div>
+        <div style="background: #f5f3ff; border-left: 4px solid #8b5cf6; padding: 10px 14px; border-radius: 8px;">
+          <strong>5. คลุกแกลบดำ:</strong> ช่วยไม่ให้ไข่ติดกัน และช่วยรักษาความชื้นของดินสอพองให้เกลือค่อยๆ ซึมเข้าไข่
+        </div>
+        <div style="background: #f5f3ff; border-left: 4px solid #8b5cf6; padding: 10px 14px; border-radius: 8px;">
+          <strong>6. บรรจุและหมัก:</strong> เรียงลงกล่อง เก็บในที่แห้ง อากาศถ่ายเท (7-10 วัน ทอดไข่ดาว / 10-14 วัน ต้มไข่เค็ม)
+        </div>
+      </div>
+
+      <button id="btn-close-review" class="btn btn-primary btn-lg">
+        ปิดหน้าทบทวน
+      </button>
+    </div>
+  </div>
+
+  <!-- Fullscreen Modal 6: Teacher Mode Dashboard -->
+  <div id="modal-teacher" class="modal-backdrop" style="display: none;">
+    <div class="modal-box" style="max-width: 680px; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h2 class="modal-title" style="margin: 0;">📊 โหมดครูผู้สอน (Dashboard)</h2>
+        <button id="btn-close-teacher" class="icon-btn" style="width: 36px; height: 36px; font-size: 16px;">✕</button>
+      </div>
+
+      <div id="teacher-pin-section">
+        <p class="modal-desc">กรุณากรอกรหัสผ่าน PIN เพื่อเข้าดูผลการประเมินทักษะของนักเรียน</p>
+        <div style="display: flex; gap: 8px; max-width: 320px; margin: 0 auto 16px;">
+          <input type="password" id="input-teacher-pin" class="form-input" placeholder="ใส่รหัส PIN" maxlength="6" style="text-align: center; font-size: 20px; letter-spacing: 4px;">
+          <button id="btn-submit-pin" class="btn btn-primary">เข้าใช้งาน</button>
+        </div>
+      </div>
+
+      <div id="teacher-content-section" style="display: none;">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px;">
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 12px; text-align: center;">
+            <div style="font-size: 12px; color: #166534; font-weight: 600;">นักเรียนทั้งหมด</div>
+            <div style="font-size: 24px; font-weight: 800; color: #15803d;" id="t-stat-students">0 คน</div>
+          </div>
+          <div style="background: #fefce8; border: 1px solid #fef08a; border-radius: 14px; padding: 12px; text-align: center;">
+            <div style="font-size: 12px; color: #854d0e; font-weight: 600;">คะแนนเฉลี่ย</div>
+            <div style="font-size: 24px; font-weight: 800; color: #b45309;" id="t-stat-avg-score">0 / 100</div>
+          </div>
+          <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; padding: 12px; text-align: center;">
+            <div style="font-size: 12px; color: #1e40af; font-weight: 600;">ดาวเฉลี่ย</div>
+            <div style="font-size: 24px; font-weight: 800; color: #2563eb;" id="t-stat-avg-stars">0.0 ⭐</div>
+          </div>
+        </div>
+
+        <div style="background: #fff7ed; border-left: 4px solid #f97316; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 13px;">
+          <strong>⚠️ จุดที่นักเรียนมักทำผิดพลาดมากที่สุด:</strong>
+          <span id="t-weak-summary">กำลังวิเคราะห์ข้อมูล...</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>เวลา</th>
+                <th>ชื่อ-สกุล</th>
+                <th>เลขที่</th>
+                <th>ห้อง</th>
+                <th>คะแนน</th>
+                <th>ดาว</th>
+                <th>ด่าน 1</th>
+                <th>ด่าน 2</th>
+                <th>ด่าน 3</th>
+                <th>ด่าน 4</th>
+                <th>ด่าน 5</th>
+                <th>ด่าน 6</th>
+                <th>โบนัส</th>
+                <th>จุดที่ต้องฝึกเพิ่ม</th>
+              </tr>
+            </thead>
+            <tbody id="teacher-students-tbody">
+              <tr>
+                <td colspan="14" style="text-align: center; padding: 16px; color: #9ca3af;">ไม่มีข้อมูลนักเรียน</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+          <a id="link-open-google-sheet" href="https://docs.google.com/spreadsheets/d/1NI1pBQd-2u1lqB2IRwcdHUjKIIwZ8MZohmMZceXx7OA/edit" target="_blank" class="btn btn-outline" style="font-size: 13px; text-decoration: none;">
+            📊 เปิดดูบน Google Sheet
+          </a>
+          <button id="btn-refresh-teacher-data" class="btn btn-primary" style="font-size: 13px;">
+            🔄 รีเฟรชข้อมูล
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <script>
+    /* ==========================================================
+       1. WEB AUDIO API SYNTHESIZER
+       ========================================================== */
+    class SoundFX {
+      constructor() {
+        this.ctx = null;
+        this.isMuted = false;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playTone(freq, type = 'sine', duration = 0.2, gainVal = 0.15) {
+        if (this.isMuted) return;
+        this.init();
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch(e){}
+      }
+
+      playCorrect() {
+        this.init();
+        this.playTone(523.25, 'triangle', 0.15, 0.2); // C5
+        setTimeout(() => this.playTone(659.25, 'triangle', 0.15, 0.2), 100); // E5
+        setTimeout(() => this.playTone(783.99, 'triangle', 0.3, 0.25), 200); // G5
+      }
+
+      playWrong() {
+        this.init();
+        this.playTone(220, 'sawtooth', 0.2, 0.15); // A3
+        setTimeout(() => this.playTone(185, 'sawtooth', 0.3, 0.15), 150); // F#3
+      }
+
+      playSplash() {
+        this.init();
+        if (this.isMuted) return;
+        try {
+          for (let i = 0; i < 4; i++) {
+            setTimeout(() => {
+              this.playTone(400 + Math.random() * 300, 'sine', 0.08, 0.1);
+            }, i * 60);
+          }
+        } catch(e){}
+      }
+
+      playKnead() {
+        this.init();
+        this.playTone(160 + Math.random() * 40, 'triangle', 0.12, 0.08);
+      }
+
+      playCoat() {
+        this.init();
+        this.playTone(320 + Math.random() * 80, 'sine', 0.09, 0.08);
+      }
+
+      playTriumph() {
+        this.init();
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          setTimeout(() => {
+            this.playTone(freq, 'triangle', 0.3, 0.25);
+          }, idx * 120);
+        });
+      }
+
+      toggleMute() {
+        this.isMuted = !this.isMuted;
+        return this.isMuted;
+      }
+    }
+
+    const sound = new SoundFX();
+    const APPS_SCRIPT_API_URL = 'https://script.google.com/macros/s/AKfycbzbTvonpNi2Ci3P6uRKcXho1I2rdKVytxqRC4lOBwrhXzCPIQzeu4w_GnexCHnZi1tN/exec';
+
+    /* ==========================================================
+       2. GAME STATE MANAGEMENT
+       ========================================================== */
+    const GAME_STATE = {
+      student: { name: '', no: '', class: '' },
+      mode: '3d',
+      currentStage: 1,
+      startTime: null,
+      endTime: null,
+      hintsUsed: 0,
+      scores: {
+        stage1: 10,
+        stage2: 10,
+        stage3: 25,
+        stage4: 20,
+        stage5: 10,
+        stage6: 10,
+        bonus: 15
+      },
+      stageMistakes: {
+        stage1: 0,
+        stage2: 0,
+        stage3: 0,
+        stage4: 0,
+        stage5: 0,
+        stage6: 0,
+        bonus: 0
+      },
+      stage1: { selectedEggs: 0, target: 3 },
+      stage2: { cleanPercent: 0, dryPercent: 0, isClean: false, isDry: false },
+      stage3: { dinSorPhong: 0, salt: 0, water: 0, kneadPercent: 0, kneadDone: false },
+      stage4: { coveredPercent: 0, done: false },
+      stage5: { huskPercent: 0, done: false },
+      stage6: { placed: false, locationAnswered: false },
+      bonus: { q1Answered: false, q2Answered: false }
+    };
+
+    /* ==========================================================
+       3. THREE.JS 3D SCENE & PROCEDURAL ASSETS
+       ========================================================== */
+    let scene, camera, renderer, controls;
+    let tableGroup, eggMesh, waterBasinMesh, clothMesh, bowlMesh, huskTrayMesh, eggCartonMesh;
+    let stage1Eggs = [];
+    let pasteLiquidMesh;
+
+    function init3D() {
+      const container = document.getElementById('webgl-container');
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xf1f5f9);
+
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 3.2, 4.2);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      container.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxPolarAngle = Math.PI / 2 + 0.1;
+      controls.minDistance = 1.8;
+      controls.maxDistance = 8.0;
+      controls.target.set(0, 0.5, 0);
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+      scene.add(ambientLight);
+
+      const dirLight = new THREE.DirectionalLight(0xfffaed, 0.9);
+      dirLight.position.set(4, 7, 5);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 1024;
+      dirLight.shadow.mapSize.height = 1024;
+      scene.add(dirLight);
+
+      const fillLight = new THREE.DirectionalLight(0x93c5fd, 0.4);
+      fillLight.position.set(-4, 3, -3);
+      scene.add(fillLight);
+
+      buildWorkbench();
+      createProceduralObjects();
+
+      window.addEventListener('resize', onWindowResize);
+      animate();
+    }
+
+    function buildWorkbench() {
+      tableGroup = new THREE.Group();
+      scene.add(tableGroup);
+
+      const tableGeo = new THREE.BoxGeometry(4.2, 0.15, 2.8);
+      const tableMat = new THREE.MeshStandardMaterial({
+        color: 0xd97706,
+        roughness: 0.6,
+        metalness: 0.1
+      });
+      const tableMesh = new THREE.Mesh(tableGeo, tableMat);
+      tableMesh.position.y = 0;
+      tableMesh.receiveShadow = true;
+      tableGroup.add(tableMesh);
+
+      const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 2.5);
+      const legMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.7 });
+      const positions = [
+        [-1.9, -1.25, -1.2],
+        [1.9, -1.25, -1.2],
+        [-1.9, -1.25, 1.2],
+        [1.9, -1.25, 1.2]
+      ];
+      positions.forEach(pos => {
+        const leg = new THREE.Mesh(legGeo, legMat);
+        leg.position.set(...pos);
+        tableGroup.add(leg);
+      });
+
+      const floorGeo = new THREE.PlaneGeometry(12, 12);
+      const floorMat = new THREE.ShadowMaterial({ opacity: 0.25 });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = -2.5;
+      floor.receiveShadow = true;
+      scene.add(floor);
+    }
+
+    function createEggTexture(type = 'good') {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createLinearGradient(0, 0, 512, 512);
+      grad.addColorStop(0, '#f8fafc');
+      grad.addColorStop(0.5, '#f1f5f9');
+      grad.addColorStop(1, '#e2e8f0');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 512, 512);
+
+      for (let i = 0; i < 600; i++) {
+        ctx.fillStyle = 'rgba(203, 213, 225, 0.4)';
+        ctx.beginPath();
+        ctx.arc(Math.random() * 512, Math.random() * 512, Math.random() * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (type === 'cracked') {
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(220, 180);
+        ctx.lineTo(250, 240);
+        ctx.lineTo(290, 260);
+        ctx.lineTo(270, 310);
+        ctx.lineTo(310, 360);
+        ctx.stroke();
+
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(250, 240);
+        ctx.lineTo(220, 280);
+        ctx.moveTo(290, 260);
+        ctx.lineTo(330, 270);
+        ctx.stroke();
+      } else if (type === 'dirty') {
+        ctx.fillStyle = 'rgba(120, 53, 15, 0.75)';
+        for (let i = 0; i < 24; i++) {
+          ctx.beginPath();
+          const x = 180 + Math.random() * 160;
+          const y = 180 + Math.random() * 160;
+          const r = 6 + Math.random() * 18;
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      const texture = new THREE.CanvasTexture(canvas);
+      return texture;
+    }
+
+    function createEggGeometry() {
+      const geo = new THREE.SphereGeometry(0.35, 32, 32);
+      const pos = geo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const y = pos.getY(i);
+        if (y > 0) {
+          pos.setY(i, y * 1.35);
+          const x = pos.getX(i);
+          const z = pos.getZ(i);
+          pos.setX(i, x * (1 - y * 0.15));
+          pos.setZ(i, z * (1 - y * 0.15));
+        }
+      }
+      geo.computeVertexNormals();
+      return geo;
+    }
+
+    function createProceduralObjects() {
+      const eggGeo = createEggGeometry();
+
+      const eggMat = new THREE.MeshStandardMaterial({
+        map: createEggTexture('good'),
+        roughness: 0.45,
+        metalness: 0.05
+      });
+      eggMesh = new THREE.Mesh(eggGeo, eggMat);
+      eggMesh.position.set(0, 0.55, 0);
+      eggMesh.castShadow = true;
+      scene.add(eggMesh);
+
+      const basinGeo = new THREE.CylinderGeometry(0.9, 0.7, 0.45, 32);
+      const basinMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.3 });
+      waterBasinMesh = new THREE.Mesh(basinGeo, basinMat);
+      waterBasinMesh.position.set(-1.2, 0.3, 0);
+      waterBasinMesh.receiveShadow = true;
+      scene.add(waterBasinMesh);
+
+      const waterGeo = new THREE.CylinderGeometry(0.85, 0.85, 0.05, 32);
+      const waterMat = new THREE.MeshStandardMaterial({
+        color: 0x38bdf8,
+        transparent: true,
+        opacity: 0.75,
+        roughness: 0.1
+      });
+      const waterSurface = new THREE.Mesh(waterGeo, waterMat);
+      waterSurface.position.y = 0.2;
+      waterBasinMesh.add(waterSurface);
+
+      const clothGeo = new THREE.BoxGeometry(0.6, 0.06, 0.6);
+      const clothMat = new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.9 });
+      clothMesh = new THREE.Mesh(clothGeo, clothMat);
+      clothMesh.position.set(1.2, 0.12, 0);
+      scene.add(clothMesh);
+
+      const bowlGeo = new THREE.CylinderGeometry(0.8, 0.45, 0.5, 32, 1, true);
+      const bowlMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.3, side: THREE.DoubleSide });
+      bowlMesh = new THREE.Mesh(bowlGeo, bowlMat);
+      bowlMesh.position.set(0, 0.35, 0);
+      bowlMesh.visible = false;
+      scene.add(bowlMesh);
+
+      const pasteGeo = new THREE.CylinderGeometry(0.72, 0.72, 0.05, 32);
+      const pasteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.7 });
+      pasteLiquidMesh = new THREE.Mesh(pasteGeo, pasteMat);
+      pasteLiquidMesh.position.y = 0.05;
+      bowlMesh.add(pasteLiquidMesh);
+
+      const trayGeo = new THREE.BoxGeometry(1.6, 0.2, 1.2);
+      const trayMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.8 });
+      huskTrayMesh = new THREE.Mesh(trayGeo, trayMat);
+      huskTrayMesh.position.set(0, 0.2, 0);
+      huskTrayMesh.visible = false;
+      scene.add(huskTrayMesh);
+
+      const cartonGeo = new THREE.BoxGeometry(1.5, 0.25, 1.0);
+      const cartonMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.85 });
+      eggCartonMesh = new THREE.Mesh(cartonGeo, cartonMat);
+      eggCartonMesh.position.set(0, 0.22, 0);
+      eggCartonMesh.visible = false;
+      scene.add(eggCartonMesh);
+
+      setupStage1Eggs();
+    }
+
+    function setupStage1Eggs() {
+      stage1Eggs.forEach(e => scene.remove(e));
+      stage1Eggs = [];
+
+      const eggGeo = createEggGeometry();
+      const eggConfigs = [
+        { type: 'good', pos: [-1.2, 0.38, -0.4], label: 'ไข่ดี 1' },
+        { type: 'cracked', pos: [-0.4, 0.38, -0.5], label: 'ไข่ร้าว' },
+        { type: 'good', pos: [0.4, 0.38, -0.4], label: 'ไข่ดี 2' },
+        { type: 'dirty', pos: [1.2, 0.38, -0.5], label: 'ไข่เปื้อนดิน' },
+        { type: 'cracked', pos: [-0.8, 0.38, 0.4], label: 'ไข่ร้าว 2' },
+        { type: 'good', pos: [0.0, 0.38, 0.5], label: 'ไข่ดี 3' },
+        { type: 'dirty', pos: [0.8, 0.38, 0.4], label: 'ไข่สกปรก' }
+      ];
+
+      eggConfigs.forEach((cfg, index) => {
+        const mat = new THREE.MeshStandardMaterial({
+          map: createEggTexture(cfg.type),
+          roughness: 0.5
+        });
+        const mesh = new THREE.Mesh(eggGeo, mat);
+        mesh.position.set(...cfg.pos);
+        mesh.rotation.z = (Math.random() - 0.5) * 0.4;
+        mesh.castShadow = true;
+        mesh.userData = { id: index, type: cfg.type, isSelected: false };
+        scene.add(mesh);
+        stage1Eggs.push(mesh);
+      });
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+
+      if (eggMesh && eggMesh.visible && GAME_STATE.currentStage === 4) {
+        eggMesh.position.y = 0.55 + Math.sin(Date.now() * 0.003) * 0.04;
+      }
+
+      renderer.render(scene, camera);
+    }
+    /* ==========================================================
+       4. UI & STAGE CONTROLLERS
+       ========================================================== */
+    function showToast(msg, duration = 2500) {
+      const toast = document.getElementById('toast-msg');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, duration);
+    }
+
+    function setMascot(text, mood = 'happy') {
+      const el = document.getElementById('mascot-dialogue-text');
+      const icon = document.querySelector('.mascot-avatar-inner');
+      el.textContent = text;
+      if (mood === 'happy') icon.textContent = '🥚';
+      else if (mood === 'celebrate') icon.textContent = '🥳';
+      else if (mood === 'thinking') icon.textContent = '🧐';
+      else if (mood === 'warning') icon.textContent = '⚠️';
+    }
+
+    function updateScoreDisplay() {
+      const total = Object.values(GAME_STATE.scores).reduce((a, b) => a + b, 0);
+      document.getElementById('score-display').textContent = total + ' / 100';
+    }
+
+    function setStage(stageNum) {
+      GAME_STATE.currentStage = stageNum;
+      const badgeText = document.getElementById('stage-badge-text');
+      const actionCard = document.getElementById('dynamic-action-card');
+
+      if (waterBasinMesh) waterBasinMesh.visible = false;
+      if (clothMesh) clothMesh.visible = false;
+      if (bowlMesh) bowlMesh.visible = false;
+      if (huskTrayMesh) huskTrayMesh.visible = false;
+      if (eggCartonMesh) eggCartonMesh.visible = false;
+      if (eggMesh) eggMesh.visible = false;
+      stage1Eggs.forEach(e => e.visible = false);
+
+      switch (stageNum) {
+        case 1:
+          badgeText.textContent = 'ด่านที่ 1 : นักคัดไข่มือโปร';
+          setMascot('ลองแตะเลือกไข่เป็ดที่สด เปลือกสะอาด สมบูรณ์ และไม่มีรอยแตกร้าว (เลือกให้ครบ 3 ฟองนะ!)', 'thinking');
+          stage1Eggs.forEach(e => e.visible = true);
+          camera.position.set(0, 3.5, 3.5);
+          controls.target.set(0, 0.4, 0);
+
+          actionCard.innerHTML = `
+            <h3>ภารกิจ: คัดเลือกไข่เป็ดสมบูรณ์</h3>
+            <p style="margin: 6px 0 12px; color: #4b5563;">แตะที่ไข่ในโต๊ะ 3 มิติ หรือกดปุ่มคัดแยกด้านล่าง</p>
+            <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;">
+              <span id="s1-egg-counter" class="badge-pill" style="font-size: 15px; padding: 6px 14px;">คัดเลือกได้แล้ว: 0 / 3 ฟอง</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+              <button class="btn btn-outline" onclick="selectEggDirectly(0)">🥚 ฟองที่ 1</button>
+              <button class="btn btn-outline" onclick="selectEggDirectly(1)">🥚 ฟองที่ 2</button>
+              <button class="btn btn-outline" onclick="selectEggDirectly(2)">🥚 ฟองที่ 3</button>
+              <button class="btn btn-outline" onclick="selectEggDirectly(3)">🥚 ฟองที่ 4</button>
+              <button class="btn btn-outline" onclick="selectEggDirectly(4)">🥚 ฟองที่ 5</button>
+              <button class="btn btn-outline" onclick="selectEggDirectly(5)">🥚 ฟองที่ 6</button>
+            </div>
+          `;
+          break;
+
+        case 2:
+          badgeText.textContent = 'ด่านที่ 2 : สะอาดก่อนหมัก';
+          setMascot('เก่งมาก! ต่อไปเราต้องนำไข่ไปล้างให้สะอาด และเช็ดให้แห้งสนิทก่อนพอกดินสอพองนะ', 'happy');
+          eggMesh.visible = true;
+          eggMesh.position.set(0, 0.55, 0);
+          waterBasinMesh.visible = true;
+          clothMesh.visible = true;
+          camera.position.set(0, 2.8, 3.2);
+
+          actionCard.innerHTML = `
+            <h3>ภารกิจ: ล้างและเช็ดไข่ให้แห้ง</h3>
+            <p style="margin: 6px 0; font-size: 14px; color: #4b5563;">ล้างคราบสกปรกและเช็ดให้แห้งสนิท</p>
+            
+            <div style="text-align: left; margin: 8px 0;">
+              <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+                <span>💧 ระดับความสะอาด:</span> <span id="s2-clean-val">0%</span>
+              </div>
+              <div class="progress-bar-container">
+                <div id="s2-clean-progress" class="progress-bar-fill" style="width: 0%;"></div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+                <span>💨 ระดับความแห้ง:</span> <span id="s2-dry-val">0%</span>
+              </div>
+              <div class="progress-bar-container">
+                <div id="s2-dry-progress" class="progress-bar-fill" style="width: 0%; background: linear-gradient(90deg, #f59e0b, #d97706);"></div>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 10px;">
+              <button id="btn-s2-wash" class="btn btn-outline" style="flex: 1;" onclick="actionWashEgg()">
+                🌊 ถู/ล้างในอ่างน้ำ
+              </button>
+              <button id="btn-s2-dry" class="btn btn-outline" style="flex: 1;" onclick="actionDryEgg()">
+                🧣 ใช้ผ้าเช็ดไข่
+              </button>
+            </div>
+
+            <button id="btn-s2-next" class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="checkStage2Completion()">
+              ไปขั้นตอนต่อไป ➔
+            </button>
+          `;
+          break;
+
+        case 3:
+          badgeText.textContent = 'ด่านที่ 3 : สูตรลับ 3 : 1 : 1';
+          setMascot('จำสูตรนี้ไว้นะ! ดินสอพอง 3 ส่วน, เกลือป่น 1 ส่วน, และน้ำสะอาดประมาณ 1 ส่วน จากนั้นนวดให้เหนียวข้นจ้า', 'thinking');
+          bowlMesh.visible = true;
+          camera.position.set(0, 2.5, 2.5);
+
+          actionCard.innerHTML = `
+            <h3>ภารกิจ: ผสมสูตรลับ 3 : 1 : 1 และนวด</h3>
+            <p style="margin: 4px 0 10px; font-size: 13px; color: #4b5563;">ตวงส่วนผสมใส่ชามให้ตรงสูตร</p>
+
+            <div class="recipe-shelf">
+              <div class="ingredient-btn" onclick="addIngredient('din')">
+                <div class="ingredient-icon">⚪</div>
+                <div class="ingredient-name">ดินสอพอง</div>
+                <div class="ingredient-count" id="count-din">0 / 3</div>
+              </div>
+              <div class="ingredient-btn" onclick="addIngredient('salt')">
+                <div class="ingredient-icon">🧂</div>
+                <div class="ingredient-name">เกลือป่น</div>
+                <div class="ingredient-count" id="count-salt">0 / 1</div>
+              </div>
+              <div class="ingredient-btn" onclick="addIngredient('water')">
+                <div class="ingredient-icon">💧</div>
+                <div class="ingredient-name">น้ำสะอาด</div>
+                <div class="ingredient-count" id="count-water">0 / 1</div>
+              </div>
+            </div>
+
+            <div id="knead-interactive-area" style="display: none; border-top: 1px dashed #d1d5db; padding-top: 10px;">
+              <p style="font-weight: 600; font-size: 14px; color: #b45309;">นวดส่วนผสม: ใช้นิ้ววนเป็นวงกลมบนแป้นนี้</p>
+              <div class="knead-circle-pad" id="knead-pad" onpointermove="handleKnead(event)">
+                <span style="font-size: 32px;">🥣</span>
+                <span style="font-size: 11px; font-weight: 700; color: #92400e;">วนนิ้วตรงนี้</span>
+              </div>
+              <div class="progress-bar-container" style="max-width: 240px; margin: 0 auto;">
+                <div id="knead-progress" class="progress-bar-fill" style="width: 0%;"></div>
+              </div>
+              <div style="font-size: 12px; margin-top: 4px; font-weight: 600;" id="knead-label">ความข้นเหนียว: 0%</div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+              <button class="btn btn-outline" style="flex: 1; font-size: 14px;" onclick="resetRecipe()">↺ ตักใหม่</button>
+              <button id="btn-s3-next" class="btn btn-primary" style="flex: 2; font-size: 14px;" onclick="verifyStage3()" disabled>นวดส่วนผสมก่อน</button>
+            </div>
+          `;
+          break;
+
+        case 4:
+          badgeText.textContent = 'ด่านที่ 4 : พอกไข่ให้ทั่ว';
+          setMascot('เยี่ยมมาก! นำดินสอพองมาพอกให้ทั่วไข่ทุกด้าน 360 องศา อย่าให้มีช่องโหว่นะ', 'happy');
+          eggMesh.visible = true;
+          eggMesh.position.set(0, 0.55, 0);
+          camera.position.set(0, 1.8, 2.4);
+
+          actionCard.innerHTML = `
+            <h3>ภารกิจ: พอกดินสอพองให้ทั่ว 360°</h3>
+            <p style="margin: 4px 0; font-size: 13px; color: #4b5563;">ใช้นิ้วปาดดินสอพอง และหมุนไข่ดูทุกด้าน</p>
+
+            <div style="margin: 10px 0;">
+              <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 700;">
+                <span>ความครอบคลุม:</span> <span id="s4-cover-val">0%</span>
+              </div>
+              <div class="progress-bar-container">
+                <div id="s4-cover-progress" class="progress-bar-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-accent" style="flex: 1;" onclick="actionCoatClay()">
+                🖐️ ปาดพอกดินสอพอง
+              </button>
+              <button class="btn btn-outline" style="flex: 1;" onclick="rotateEgg360()">
+                🔄 หมุนไข่ดูอีกด้าน
+              </button>
+            </div>
+
+            <button id="btn-s4-next" class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="completeStage4()" disabled>
+              ไปขั้นตอนต่อไป ➔
+            </button>
+          `;
+          break;
+
+        case 5:
+          badgeText.textContent = 'ด่านที่ 5 : คลุกแกลบดำ';
+          setMascot('นำไข่ที่พอกเสร็จลงไปคลุกแกลบดำ เพื่อไม่ให้ไข่ติดกันและช่วยรักษาความชื้นจ้า', 'thinking');
+          huskTrayMesh.visible = true;
+          eggMesh.visible = true;
+          eggMesh.position.set(0, 0.45, 0);
+          camera.position.set(0, 2.2, 2.4);
+
+          actionCard.innerHTML = `
+            <h3>ภารกิจ: กลิ้งไข่คลุกแกลบดำ</h3>
+            <p style="margin: 4px 0 8px; font-size: 13px; color: #4b5563;">กลิ้งไข่ไปมาในถาดแกลบดำจนดำทั่วฟอง</p>
+
+            <div class="progress-bar-container">
+              <div id="s5-husk-progress" class="progress-bar-fill" style="width: 0%; background: #1f2937;"></div>
+            </div>
+            <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px;" id="s5-husk-val">ความครอบคลุมแกลบดำ: 0%</div>
+
+            <button class="btn btn-accent btn-lg" onclick="actionRollInHusk()">
+              🌾 กลิ้งไข่ในถาดแกลบดำ
+            </button>
+            
+            <button id="btn-s5-next" class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="finishStage5()" disabled>
+              ไปขั้นตอนต่อไป ➔
+            </button>
+          `;
+          break;
+
+        case 6:
+          badgeText.textContent = 'ด่านที่ 6 : บรรจุและหมัก';
+          setMascot('เรียงไข่ลงในภาชนะอย่างระมัดระวัง และเลือกสถานที่หมักที่เหมาะสมที่สุดนะ', 'thinking');
+          eggCartonMesh.visible = true;
+          eggMesh.visible = true;
+          eggMesh.position.set(0, 0.45, 0);
+          camera.position.set(0, 2.5, 2.6);
+
+          actionCard.innerHTML = `
+            <h3>ภารกิจ: บรรจุและเลือกที่หมัก</h3>
+            <div id="s6-step1">
+              <p style="margin: 6px 0 12px; font-size: 14px;">วางไข่ลงภาชนะอย่างเบามือเพื่อไม่ให้เปลือกแตก</p>
+              <button class="btn btn-accent btn-lg" onclick="actionPackEgg()">📦 วางไข่ลงกล่องบรรจุ</button>
+            </div>
+
+            <div id="s6-step2" style="display: none; text-align: left;">
+              <p style="font-weight: 700; font-size: 15px; margin-bottom: 8px;">คำถาม: ควรนำไข่ไปหมักไว้ที่ใด?</p>
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <button class="btn btn-outline" style="text-align: left; font-size: 14px;" onclick="answerStage6Location(1)">
+                  1. แช่ไว้ในตู้เย็น
+                </button>
+                <button class="btn btn-outline" style="text-align: left; font-size: 14px;" onclick="answerStage6Location(2)">
+                  2. วางไว้กลางแดดจัด
+                </button>
+                <button class="btn btn-outline" style="text-align: left; font-size: 14px;" onclick="answerStage6Location(3)">
+                  3. บริเวณแห้งและอากาศถ่ายเท
+                </button>
+              </div>
+            </div>
+          `;
+          break;
+
+        case 7:
+          badgeText.textContent = 'Bonus Stage : ไข่เค็มกี่วันดี?';
+          setMascot('ยินดีด้วย! เข้าสู่ช่วงคำถามโบนัส มาดูกันว่าจำเวลาหมักได้แม่นแค่ไหน!', 'celebrate');
+          camera.position.set(0, 2.5, 3.2);
+
+          actionCard.innerHTML = `
+            <h3>โบนัส: ระยะเวลาการหมักไข่เค็ม</h3>
+            
+            <div id="bonus-q1" style="text-align: left; margin-bottom: 14px;">
+              <p style="font-weight: 700; font-size: 14px; margin-bottom: 6px;">
+                ข้อที่ 1: ถ้าต้องการนำไข่ไปทำ "ไข่ดาวเค็ม" ควรหมักกี่วัน?
+              </p>
+              <div style="display: flex; gap: 6px;">
+                <button class="btn btn-outline" style="flex: 1; font-size: 13px;" onclick="answerBonusQ1('1-3')">1–3 วัน</button>
+                <button class="btn btn-outline" style="flex: 1; font-size: 13px;" onclick="answerBonusQ1('7-10')">7–10 วัน</button>
+                <button class="btn btn-outline" style="flex: 1; font-size: 13px;" onclick="answerBonusQ1('20-30')">20–30 วัน</button>
+              </div>
+            </div>
+
+            <div id="bonus-q2" style="text-align: left; display: none;">
+              <p style="font-weight: 700; font-size: 14px; margin-bottom: 6px;">
+                ข้อที่ 2: ถ้าต้องการนำไข่ไป "ต้มเป็นไข่เค็ม" ควรหมักกี่วัน?
+              </p>
+              <div style="display: flex; gap: 6px;">
+                <button class="btn btn-outline" style="flex: 1; font-size: 13px;" onclick="answerBonusQ2('3-5')">3–5 วัน</button>
+                <button class="btn btn-outline" style="flex: 1; font-size: 13px;" onclick="answerBonusQ2('10-14')">10–14 วัน</button>
+                <button class="btn btn-outline" style="flex: 1; font-size: 13px;" onclick="answerBonusQ2('30')">30 วัน</button>
+              </div>
+            </div>
+          `;
+          break;
+      }
+    }
+    /* ==========================================================
+       5. STAGE INTERACTIONS IMPLEMENTATION
+       ========================================================== */
+    function selectEggDirectly(index) {
+      if (index >= stage1Eggs.length) return;
+      const egg = stage1Eggs[index];
+      if (egg.userData.isSelected) return;
+
+      if (egg.userData.type === 'good') {
+        egg.userData.isSelected = true;
+        egg.position.y += 0.3;
+        sound.playCorrect();
+        showToast('✔️ ถูกต้อง! ไข่ฟองนี้เปลือกสมบูรณ์ ไม่มีรอยร้าว');
+        GAME_STATE.stage1.selectedEggs++;
+        document.getElementById('s1-egg-counter').textContent = 'คัดเลือกได้แล้ว: ' + GAME_STATE.stage1.selectedEggs + ' / 3 ฟอง';
+
+        if (GAME_STATE.stage1.selectedEggs >= 3) {
+          setMascot('สุดยอดมาก! คัดไข่เป็ดคุณภาพเยี่ยมครบทั้ง 3 ฟองแล้ว', 'celebrate');
+          sound.playTriumph();
+          setTimeout(() => setStage(2), 1500);
+        }
+      } else if (egg.userData.type === 'cracked') {
+        sound.playWrong();
+        GAME_STATE.stageMistakes.stage1++;
+        if (GAME_STATE.scores.stage1 > 4) GAME_STATE.scores.stage1 -= 2;
+        showToast('❌ ไข่มีรอยแตกร้าว ไม่ควรนำมาทำไข่เค็ม');
+        setMascot('โอ๊ะโอ! ไข่ฟองนี้มีรอยแตกร้าว น้ำเกลือจะซึมเร็วเกินไปจนเน่าเสียได้จ้า ลองเลือกใหม่นะ', 'warning');
+      } else {
+        sound.playWrong();
+        GAME_STATE.stageMistakes.stage1++;
+        if (GAME_STATE.scores.stage1 > 4) GAME_STATE.scores.stage1 -= 2;
+        showToast('❌ ไข่เปื้อนดินสกปรก ควรเลือกไข่ที่เปลือกสะอาดก่อน');
+        setMascot('ไข่ฟองนี้เปื้อนดินหนามาก อาจสะสมเชื้อโรคได้ ควรเลือกฟองที่สะอาดเรียบร้อยก่อนจ้า', 'warning');
+      }
+      updateScoreDisplay();
+    }
+
+    function actionWashEgg() {
+      sound.playSplash();
+      GAME_STATE.stage2.cleanPercent = Math.min(100, GAME_STATE.stage2.cleanPercent + 25);
+      document.getElementById('s2-clean-progress').style.width = GAME_STATE.stage2.cleanPercent + '%';
+      document.getElementById('s2-clean-val').textContent = GAME_STATE.stage2.cleanPercent + '%';
+
+      if (GAME_STATE.stage2.cleanPercent >= 100 && !GAME_STATE.stage2.isClean) {
+        GAME_STATE.stage2.isClean = true;
+        showToast('💧 ล้างไข่สะอาดเรียบร้อยแล้ว!');
+        setMascot('ล้างสะอาดแล้ว อย่าลืมใช้ผ้าเช็ดให้แห้งสนิทนะ', 'happy');
+      }
+    }
+
+    function actionDryEgg() {
+      if (GAME_STATE.stage2.cleanPercent < 50) {
+        sound.playWrong();
+        showToast('⚠️ ควรล้างคราบสกปรกให้สะอาดก่อนเช็ดจ้า');
+        return;
+      }
+      sound.playTone(300, 'sine', 0.1, 0.1);
+      GAME_STATE.stage2.dryPercent = Math.min(100, GAME_STATE.stage2.dryPercent + 25);
+      document.getElementById('s2-dry-progress').style.width = GAME_STATE.stage2.dryPercent + '%';
+      document.getElementById('s2-dry-val').textContent = GAME_STATE.stage2.dryPercent + '%';
+
+      if (GAME_STATE.stage2.dryPercent >= 100) {
+        GAME_STATE.stage2.isDry = true;
+        showToast('✨ ไข่แห้งสนิทพร้อมพอกแล้ว!');
+      }
+    }
+
+    function checkStage2Completion() {
+      if (!GAME_STATE.stage2.isDry || GAME_STATE.stage2.dryPercent < 100) {
+        sound.playWrong();
+        GAME_STATE.stageMistakes.stage2++;
+        if (GAME_STATE.scores.stage2 > 4) GAME_STATE.scores.stage2 -= 2;
+        updateScoreDisplay();
+        showToast('⚠️ ควรเช็ดหรือผึ่งไข่ให้แห้งสนิทก่อนพอกดินสอพอง');
+        setMascot('คำเตือน: ควรเช็ดหรือผึ่งไข่ให้แห้งสนิทก่อนพอกดินสอพองนะ ถ้ายังชื้นอยู่จะขึ้นราได้ง่ายจ้า', 'warning');
+        return;
+      }
+      sound.playTriumph();
+      setMascot('สะอาดและแห้งสนิทดีมาก พร้อมเข้าสู่ขั้นตอนผสมดินสอพองแล้ว!', 'celebrate');
+      setTimeout(() => setStage(3), 1000);
+    }
+
+    function addIngredient(type) {
+      sound.playTone(440, 'triangle', 0.1, 0.15);
+      if (type === 'din') {
+        GAME_STATE.stage3.dinSorPhong++;
+        document.getElementById('count-din').textContent = GAME_STATE.stage3.dinSorPhong + ' / 3';
+      } else if (type === 'salt') {
+        GAME_STATE.stage3.salt++;
+        document.getElementById('count-salt').textContent = GAME_STATE.stage3.salt + ' / 1';
+      } else if (type === 'water') {
+        GAME_STATE.stage3.water++;
+        document.getElementById('count-water').textContent = GAME_STATE.stage3.water + ' / 1';
+      }
+
+      const din = GAME_STATE.stage3.dinSorPhong;
+      const salt = GAME_STATE.stage3.salt;
+      const water = GAME_STATE.stage3.water;
+
+      if (din > 3 || salt > 1 || water > 1) {
+        sound.playWrong();
+        GAME_STATE.stageMistakes.stage3++;
+        if (GAME_STATE.scores.stage3 > 10) GAME_STATE.scores.stage3 -= 3;
+        updateScoreDisplay();
+        showToast('⚠️ สัดส่วนเกินสูตร! สูตรที่ถูกต้องคือ ดินสอพอง 3 : เกลือ 1 : น้ำ 1');
+        setMascot('ตักเกินสูตรแล้วจ้า! ลองกดปุ่ม "ตักใหม่" แล้วใส่ ดินสอพอง 3, เกลือ 1, น้ำ 1 นะ', 'warning');
+        return;
+      }
+
+      if (din === 3 && salt === 1 && water === 1) {
+        sound.playCorrect();
+        showToast('🎉 สัดส่วนถูกต้องครบถ้วน! เริ่มนวดส่วนผสมได้เลย');
+        setMascot('ยอดเยี่ยมมาก! ส่วนผสมครบสูตร 3:1:1 แล้ว ตอนนี้ใช้นิ้ววนเป็นวงกลมเพื่อนวดแป้งเลยจ้า', 'celebrate');
+        document.getElementById('knead-interactive-area').style.display = 'block';
+      }
+    }
+
+    function resetRecipe() {
+      GAME_STATE.stage3.dinSorPhong = 0;
+      GAME_STATE.stage3.salt = 0;
+      GAME_STATE.stage3.water = 0;
+      GAME_STATE.stage3.kneadPercent = 0;
+      document.getElementById('count-din').textContent = '0 / 3';
+      document.getElementById('count-salt').textContent = '0 / 1';
+      document.getElementById('count-water').textContent = '0 / 1';
+      document.getElementById('knead-interactive-area').style.display = 'none';
+      document.getElementById('btn-s3-next').disabled = true;
+      document.getElementById('btn-s3-next').textContent = 'นวดส่วนผสมก่อน';
+    }
+
+    let lastKneadTime = 0;
+    function handleKnead(e) {
+      const now = Date.now();
+      if (now - lastKneadTime < 80) return;
+      lastKneadTime = now;
+
+      sound.playKnead();
+      GAME_STATE.stage3.kneadPercent = Math.min(100, GAME_STATE.stage3.kneadPercent + 5);
+      document.getElementById('knead-progress').style.width = GAME_STATE.stage3.kneadPercent + '%';
+      document.getElementById('knead-label').textContent = 'ความข้นเหนียว: ' + GAME_STATE.stage3.kneadPercent + '%';
+
+      if (pasteLiquidMesh) {
+        pasteLiquidMesh.scale.set(1 + GAME_STATE.stage3.kneadPercent * 0.001, 1, 1 + GAME_STATE.stage3.kneadPercent * 0.001);
+      }
+
+      if (GAME_STATE.stage3.kneadPercent >= 100 && !GAME_STATE.stage3.kneadDone) {
+        GAME_STATE.stage3.kneadDone = true;
+        sound.playCorrect();
+        showToast('✨ เยี่ยมมาก! ส่วนผสมข้นเหนียวและสามารถเกาะผิวไข่ได้แล้ว');
+        setMascot('เยี่ยมมาก! ส่วนผสมข้นเหนียวและสามารถเกาะผิวไข่ได้แล้ว', 'celebrate');
+        document.getElementById('btn-s3-next').disabled = false;
+        document.getElementById('btn-s3-next').textContent = 'ไปขั้นตอนต่อไป ➔';
+      }
+    }
+
+    function verifyStage3() {
+      sound.playTriumph();
+      setStage(4);
+    }
+
+    function actionCoatClay() {
+      sound.playCoat();
+      GAME_STATE.stage4.coveredPercent = Math.min(100, GAME_STATE.stage4.coveredPercent + 25);
+      document.getElementById('s4-cover-progress').style.width = GAME_STATE.stage4.coveredPercent + '%';
+      document.getElementById('s4-cover-val').textContent = GAME_STATE.stage4.coveredPercent + '%';
+
+      if (eggMesh) {
+        eggMesh.material.color.setHex(0xfefefe);
+        eggMesh.scale.addScalar(0.015);
+      }
+
+      if (GAME_STATE.stage4.coveredPercent < 100) {
+        setMascot('พอกไปได้ ' + GAME_STATE.stage4.coveredPercent + '% แล้ว! อย่าลืมหมุนดูด้านหลังด้วยนะ', 'thinking');
+      } else {
+        GAME_STATE.stage4.done = true;
+        sound.playTriumph();
+        confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+        showToast('🌟 พอกไข่ครบ 100% เรียบเนียนสม่ำเสมอ!');
+        setMascot('พอกได้หนาและสม่ำเสมอทั่วทั้งฟอง เยี่ยมไปเลย!', 'celebrate');
+        document.getElementById('btn-s4-next').disabled = false;
+      }
+    }
+
+    function rotateEgg360() {
+      sound.playTone(350, 'sine', 0.1, 0.1);
+      if (eggMesh) {
+        eggMesh.rotation.y += Math.PI / 2;
+      }
+      if (GAME_STATE.stage4.coveredPercent < 100) {
+        showToast('🔍 ตรวจสอบจุดที่ยังพอกไม่ทั่ว');
+      }
+    }
+
+    function completeStage4() {
+      setStage(5);
+    }
+
+    function actionRollInHusk() {
+      sound.playTone(200, 'triangle', 0.12, 0.1);
+      GAME_STATE.stage5.huskPercent = Math.min(100, GAME_STATE.stage5.huskPercent + 25);
+      document.getElementById('s5-husk-progress').style.width = GAME_STATE.stage5.huskPercent + '%';
+      document.getElementById('s5-husk-val').textContent = 'ความครอบคลุมแกลบดำ: ' + GAME_STATE.stage5.huskPercent + '%';
+
+      if (eggMesh) {
+        eggMesh.rotation.x += 0.6;
+        eggMesh.rotation.z += 0.4;
+        const factor = 1 - (GAME_STATE.stage5.huskPercent / 100) * 0.85;
+        eggMesh.material.color.setRGB(factor, factor, factor);
+      }
+
+      if (GAME_STATE.stage5.huskPercent >= 100 && !GAME_STATE.stage5.done) {
+        GAME_STATE.stage5.done = true;
+        sound.playCorrect();
+        showToast('🌾 แกลบดำเคลือบติดทั่วไข่แล้ว!');
+        setMascot('รู้ไหมเอ่ย? แกลบดำช่วยไม่ให้ไข่ติดกัน และช่วยรักษาความชื้นของดินสอพองที่พอกไว้จ้า', 'celebrate');
+        document.getElementById('btn-s5-next').disabled = false;
+      }
+    }
+
+    function finishStage5() {
+      sound.playTriumph();
+      setStage(6);
+    }
+
+    function actionPackEgg() {
+      sound.playCorrect();
+      showToast('📦 จัดเรียงไข่ลงภาชนะเรียบร้อย');
+      document.getElementById('s6-step1').style.display = 'none';
+      document.getElementById('s6-step2').style.display = 'block';
+      setMascot('เก่งมาก! ขั้นสุดท้าย ควรนำภาชนะหมักไข่ไปวางไว้ที่ไหนดีนะ?', 'thinking');
+    }
+
+    function answerStage6Location(choice) {
+      if (choice === 3) {
+        sound.playCorrect();
+        showToast('✔️ ถูกต้อง! บริเวณแห้งและอากาศถ่ายเท โดยไม่ต้องแช่ตู้เย็น');
+        setMascot('ถูกต้องที่สุด! วางไว้ในที่แห้ง อากาศถ่ายเท และไม่ต้องแช่ตู้เย็น จะทำให้เกลือค่อยๆ ซึมได้อย่างสม่ำเสมอจ้า', 'celebrate');
+        setTimeout(() => setStage(7), 1800);
+      } else {
+        sound.playWrong();
+        GAME_STATE.stageMistakes.stage6++;
+        if (GAME_STATE.scores.stage6 > 4) GAME_STATE.scores.stage6 -= 3;
+        updateScoreDisplay();
+        if (choice === 1) {
+          showToast('❌ การแช่ตู้เย็นจะทำให้ความเย็นหยุดการซึมของเกลือ');
+          setMascot('ยังไม่ใช่นะจ๊ะ การแช่ตู้เย็นจะทำให้ความเย็นชะลอการซึมของเกลือ ลองเลือกใหม่อีกที!', 'warning');
+        } else {
+          showToast('❌ กลางแดดจัดจะทำให้ไข่ร้อนเกินไปและเสียได้');
+          setMascot('ระวังน้า! กลางแดดจัดจะทำให้ไข่เน่าเสียก่อนได้ที่จ้า ลองเลือกใหม่นะ', 'warning');
+        }
+      }
+    }
+
+    function answerBonusQ1(ans) {
+      if (ans === '7-10') {
+        sound.playCorrect();
+        showToast('✔️ ถูกต้อง! ทอดไข่ดาวเค็ม หมักประมาณ 7–10 วัน');
+        document.getElementById('bonus-q1').style.opacity = '0.5';
+        document.getElementById('bonus-q2').style.display = 'block';
+        setMascot('เก่งมาก! ไข่ดาวเค็มไข่แดงจะกำลังมันเยิ้มพอดี แล้วถ้าจะนำไปต้มล่ะ?', 'happy');
+      } else {
+        sound.playWrong();
+        GAME_STATE.stageMistakes.bonus++;
+        if (GAME_STATE.scores.bonus > 5) GAME_STATE.scores.bonus -= 3;
+        updateScoreDisplay();
+        showToast('ยังไม่ถูกต้อง ลองเลือกใหม่นะ');
+      }
+    }
+
+    function answerBonusQ2(ans) {
+      if (ans === '10-14') {
+        sound.playTriumph();
+        showToast('✔️ ถูกต้อง! ต้มไข่เค็ม หมักประมาณ 10–14 วัน');
+        setMascot('สำเร็จแล้ว! คุณทำภารกิจพิชิตไข่เค็มดินสอพองครบทุกขั้นตอนแล้ว เยี่ยมยอดที่สุด!', 'celebrate');
+        setTimeout(() => showGameSummary(), 1600);
+      } else {
+        sound.playWrong();
+        GAME_STATE.stageMistakes.bonus++;
+        if (GAME_STATE.scores.bonus > 5) GAME_STATE.scores.bonus -= 3;
+        updateScoreDisplay();
+        showToast('ยังไม่ถูกต้อง ลองเลือกใหม่นะ');
+      }
+    }
+    /* ==========================================================
+       6. SUMMARY & GOOGLE SHEET SYNC
+       ========================================================== */
+    function showGameSummary() {
+      GAME_STATE.endTime = Date.now();
+      const totalSeconds = Math.round((GAME_STATE.endTime - GAME_STATE.startTime) / 1000);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      const timeStr = `${minutes} นาที ${seconds} วินาที`;
+
+      const totalScore = Object.values(GAME_STATE.scores).reduce((a, b) => a + b, 0);
+
+      let stars = 1;
+      let gradeText = 'ควรฝึกฝนเพิ่มเติม ลองเล่นใหม่อีกครั้งนะ!';
+      let starStr = '⭐';
+      if (totalScore >= 90) {
+        stars = 3;
+        starStr = '⭐⭐⭐';
+        gradeText = 'ยอดเยี่ยมมาก! คุณผ่านเกณฑ์ระดับ 3 ดาว (ทักษะระดับมือโปร)';
+      } else if (totalScore >= 75) {
+        stars = 2;
+        starStr = '⭐⭐';
+        gradeText = 'ดีมาก! คุณผ่านเกณฑ์ระดับ 2 ดาว (ทักษะระดับชำนาญ)';
+      } else if (totalScore >= 60) {
+        stars = 1;
+        starStr = '⭐';
+        gradeText = 'ผ่านเกณฑ์ระดับ 1 ดาว ควรทบทวนสูตรและขั้นตอนเพิ่มเติม';
+      }
+
+      let bestStage = 'สูตรลับ 3:1:1';
+      let weakStage = 'ไม่มี';
+      let maxMistakes = 0;
+      for (const [stg, count] of Object.entries(GAME_STATE.stageMistakes)) {
+        if (count > maxMistakes) {
+          maxMistakes = count;
+          if (stg === 'stage1') weakStage = 'การคัดไข่';
+          else if (stg === 'stage2') weakStage = 'การล้างและเช็ดให้แห้ง';
+          else if (stg === 'stage3') weakStage = 'สูตรส่วนผสม 3:1:1';
+          else if (stg === 'stage4') weakStage = 'การพอกไข่ให้ทั่ว 360°';
+          else if (stg === 'stage5') weakStage = 'การคลุกแกลบดำ';
+          else if (stg === 'stage6') weakStage = 'สถานที่หมักไข่';
+          else if (stg === 'bonus') weakStage = 'ระยะเวลาการหมัก';
+        }
+      }
+
+      document.getElementById('summary-student-label').textContent = 
+        `${GAME_STATE.student.name} (${GAME_STATE.student.class} เลขที่ ${GAME_STATE.student.no})`;
+      document.getElementById('summary-stars').textContent = starStr;
+      document.getElementById('summary-total-score').textContent = totalScore;
+      document.getElementById('summary-grade-text').textContent = gradeText;
+      document.getElementById('summary-time-spent').textContent = timeStr;
+      document.getElementById('summary-hints-used').textContent = GAME_STATE.hintsUsed + ' ครั้ง';
+      document.getElementById('summary-best-stage').textContent = bestStage;
+      document.getElementById('summary-weak-point').textContent = weakStage;
+
+      document.getElementById('modal-summary').style.display = 'flex';
+      confetti({ particleCount: 80, spread: 70, origin: { y: 0.5 } });
+
+      const payload = {
+        studentName: GAME_STATE.student.name,
+        studentNo: GAME_STATE.student.no,
+        studentClass: GAME_STATE.student.class,
+        totalScore: totalScore,
+        stars: stars,
+        stage1Score: GAME_STATE.scores.stage1,
+        stage2Score: GAME_STATE.scores.stage2,
+        stage3Score: GAME_STATE.scores.stage3,
+        stage4Score: GAME_STATE.scores.stage4,
+        stage5Score: GAME_STATE.scores.stage5,
+        stage6Score: GAME_STATE.scores.stage6,
+        bonusScore: GAME_STATE.scores.bonus,
+        timeSpent: totalSeconds,
+        hintCount: GAME_STATE.hintsUsed,
+        needsPractice: weakStage,
+        badge: 'Salted Egg Master'
+      };
+
+      const syncStatusEl = document.getElementById('sheet-sync-status');
+      syncStatusEl.textContent = '☁️ กำลังบันทึกคะแนนลง Google Sheet...';
+      syncStatusEl.style.color = '#0284c7';
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(res => {
+            syncStatusEl.textContent = '✅ บันทึกคะแนนลง Google Sheet เรียบร้อยแล้ว!';
+            syncStatusEl.style.color = '#059669';
+          })
+          .withFailureHandler(err => {
+            syncStatusEl.textContent = '⚠️ การบันทึกติดขัด: ' + err;
+            syncStatusEl.style.color = '#ea580c';
+          })
+          .saveStudentScore(payload);
+      } else {
+        fetch(APPS_SCRIPT_API_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        .then(() => {
+          syncStatusEl.textContent = '✅ บันทึกคะแนนลง Google Sheet เรียบร้อยแล้ว!';
+          syncStatusEl.style.color = '#059669';
+        })
+        .catch(err => {
+          syncStatusEl.textContent = '⚠️ การบันทึกติดขัด: ' + err;
+          syncStatusEl.style.color = '#ea580c';
+        });
+      }
+    }
+
+    /* ==========================================================
+       7. POST-GAME: CARD SORTING CHALLENGE & BADGE
+       ========================================================== */
+    const ALL_STEPS = [
+      { id: 1, text: '1. คัดไข่เป็ด' },
+      { id: 2, text: '2. ล้างและเช็ดให้แห้ง' },
+      { id: 3, text: '3. ผสมดินสอพอง (สูตร 3:1:1)' },
+      { id: 4, text: '4. พอกไข่ให้ทั่ว' },
+      { id: 5, text: '5. คลุกแกลบดำ' },
+      { id: 6, text: '6. บรรจุและหมัก' }
+    ];
+
+    let userSorted = [];
+
+    function initCardSorting() {
+      userSorted = [];
+      const pool = document.getElementById('cards-pool');
+      pool.innerHTML = '';
+      document.getElementById('sorted-sequence-list').innerHTML = '';
+      document.getElementById('current-sort-step').textContent = 'ลำดับที่ 1';
+
+      const shuffled = [...ALL_STEPS].sort(() => Math.random() - 0.5);
+      shuffled.forEach(step => {
+        const card = document.createElement('div');
+        card.className = 'step-card';
+        card.textContent = step.text;
+        card.onclick = () => selectSortCard(step, card);
+        pool.appendChild(card);
+      });
+
+      document.getElementById('modal-summary').style.display = 'none';
+      document.getElementById('modal-card-sorting').style.display = 'flex';
+    }
+
+    function selectSortCard(step, cardElement) {
+      if (userSorted.some(s => s.id === step.id)) return;
+
+      userSorted.push(step);
+      cardElement.classList.add('selected');
+      cardElement.style.pointerEvents = 'none';
+
+      const list = document.getElementById('sorted-sequence-list');
+      const item = document.createElement('div');
+      item.className = 'badge-pill';
+      item.style.padding = '8px 12px';
+      item.style.background = '#f0fdf4';
+      item.style.color = '#15803d';
+      item.style.border = '1px solid #bbf7d0';
+      item.textContent = `ลำดับที่ ${userSorted.length} : ${step.text}`;
+      list.appendChild(item);
+
+      if (userSorted.length < 6) {
+        document.getElementById('current-sort-step').textContent = `ลำดับที่ ${userSorted.length + 1}`;
+      } else {
+        document.getElementById('current-sort-step').textContent = 'ครบ 6 ลำดับแล้ว กดตรวจคำตอบได้เลย!';
+      }
+    }
+
+    function verifySortedSequence() {
+      if (userSorted.length < 6) {
+        showToast('กรุณาเลือกให้ครบทั้ง 6 ขั้นตอนก่อนนะ');
+        return;
+      }
+
+      const isCorrect = userSorted.every((step, idx) => step.id === idx + 1);
+      if (isCorrect) {
+        sound.playTriumph();
+        confetti({ particleCount: 120, spread: 80, origin: { y: 0.4 } });
+        document.getElementById('modal-card-sorting').style.display = 'none';
+        document.getElementById('badge-student-details').textContent = 
+          `มอบให้แก่: ${GAME_STATE.student.name} (${GAME_STATE.student.class})`;
+        document.getElementById('modal-badge-award').style.display = 'flex';
+      } else {
+        sound.playWrong();
+        showToast('❌ ยังเรียงลำดับไม่ถูกต้อง ลองเรียงใหม่อีกครั้งนะ');
+      }
+    }
+
+    /* ==========================================================
+       8. TEACHER DASHBOARD LOGIC
+       ========================================================== */
+    function openTeacherDashboard() {
+      document.getElementById('modal-welcome').style.display = 'none';
+      document.getElementById('modal-teacher').style.display = 'flex';
+      document.getElementById('input-teacher-pin').value = '';
+      document.getElementById('teacher-pin-section').style.display = 'block';
+      document.getElementById('teacher-content-section').style.display = 'none';
+    }
+
+    function verifyTeacherPIN() {
+      const pin = document.getElementById('input-teacher-pin').value;
+      if (pin === '123') {
+        sound.playCorrect();
+        document.getElementById('teacher-pin-section').style.display = 'none';
+        document.getElementById('teacher-content-section').style.display = 'block';
+        loadTeacherData(pin);
+      } else {
+        sound.playWrong();
+        showToast('❌ รหัส PIN ไม่ถูกต้อง (ค่าเริ่มต้นคือ 123)');
+      }
+    }
+
+    function loadTeacherData(pin) {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(res => {
+            if (res.success) renderTeacherDashboard(res);
+            else showToast(res.message);
+          })
+          .getTeacherDashboardData(pin);
+      } else {
+        showToast('กำลังโหลดข้อมูลจาก Google Sheet...');
+        fetch(`${APPS_SCRIPT_API_URL}?action=getTeacherData&pin=${encodeURIComponent(pin)}`)
+          .then(r => r.json())
+          .then(res => {
+            if (res.success) renderTeacherDashboard(res);
+            else showToast(res.message);
+          })
+          .catch(err => {
+            console.warn('Teacher API fetch error:', err);
+            showToast('เชื่อมต่อ API เพื่อดึงข้อมูล: ' + err.message);
+          });
+      }
+    }
+
+    function renderTeacherDashboard(data) {
+      document.getElementById('t-stat-students').textContent = data.stats.totalStudents + ' คน';
+      document.getElementById('t-stat-avg-score').textContent = data.stats.averageScore + ' / 100';
+      document.getElementById('t-stat-avg-stars').textContent = data.stats.averageStars + ' ⭐';
+
+      const weakText = data.stats.commonWeakPoints && data.stats.commonWeakPoints.length > 0
+        ? data.stats.commonWeakPoints.map(w => `${w.topic} (${w.count} คน)`).join(', ')
+        : 'นักเรียนส่วนใหญ่ปฏิบัติได้ถูกต้องครบถ้วน';
+      document.getElementById('t-weak-summary').textContent = weakText;
+
+      const tbody = document.getElementById('teacher-students-tbody');
+      tbody.innerHTML = '';
+
+      if (data.students && data.students.length > 0) {
+        data.students.forEach(st => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${st.date ? (st.date.split(' ')[1] || st.date) : '-'}</td>
+            <td><strong>${st.name}</strong></td>
+            <td>${st.no}</td>
+            <td>${st.class}</td>
+            <td><strong style="color: #059669;">${st.totalScore}</strong></td>
+            <td>${'⭐'.repeat(st.stars || 1)}</td>
+            <td>${st.s1}</td>
+            <td>${st.s2}</td>
+            <td>${st.s3}</td>
+            <td>${st.s4}</td>
+            <td>${st.s5}</td>
+            <td>${st.s6}</td>
+            <td>${st.bonus}</td>
+            <td><span style="color: #ea580c; font-size: 12px;">${st.weak || '-'}</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } else {
+        tbody.innerHTML = '<tr><td colspan="14" style="text-align: center; padding: 16px;">ยังไม่มีข้อมูลนักเรียน</td></tr>';
+      }
+    }
+
+    
+    /* ==========================================================
+       AR CAMERA MANAGEMENT (WebRTC getUserMedia & Three.js Passthrough)
+       ========================================================== */
+    let arStream = null;
+
+    async function startARCamera() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToast('⚠️ อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการเปิดกล้อง');
+        setMascot('อุปกรณ์หรือเบราว์เซอร์นี้ยังไม่รองรับการเปิดกล้อง น้องไข่เค็มจะปรับเป็นโหมด 3D จำลองให้เล่นแทนนะจ๊ะ', 'warning');
+        switchTo3DMode();
+        return false;
+      }
+
+      showToast('📷 กำลังขออนุญาตเปิดกล้อง AR...');
+      try {
+        try {
+          arStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+            audio: false
+          });
+        } catch (errConstraint) {
+          // Fallback to any available camera (e.g. laptop webcam)
+          arStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        }
+        const video = document.getElementById('camera-feed');
+        video.srcObject = arStream;
+        video.style.display = 'block';
+        await video.play();
+
+        // Make Three.js canvas background transparent
+        scene.background = null;
+        renderer.setClearColor(0x000000, 0);
+
+        if (tableGroup) {
+          tableGroup.position.set(0, -0.4, 0);
+          tableGroup.scale.set(0.8, 0.8, 0.8);
+        }
+
+        GAME_STATE.mode = 'ar';
+        document.getElementById('ar-reticle').style.display = 'block';
+        document.getElementById('btn-mode-toggle').textContent = '📷';
+        showToast('✨ เปิดกล้อง AR สำเร็จแล้ว! ส่องโต๊ะในห้องเพื่อทำกิจกรรมได้เลย');
+        setMascot('เปิดกล้องแล้วจ้า! ส่องโต๊ะในห้องเรียนแล้วเริ่มลงมือทำไข่เค็มบนโต๊ะจริงได้เลย!', 'celebrate');
+        return true;
+      } catch (err) {
+        console.error('Camera access error:', err);
+        let msg = 'ไม่สามารถเปิดกล้องได้';
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          msg = '⚠️ กรุณากด "อนุญาต" (Allow) ให้เบราว์เซอร์เข้าถึงกล้อง';
+          setMascot('อย่าลืมกด "อนุญาต" (Allow) สิทธิ์กล้องในเบราว์เซอร์นะจ๊ะ หรือแตะไอคอนแม่กุญแจ 🔒 ที่แถบ URL เพื่อเปิดสิทธิ์กล้อง (หากไม่ได้ น้องไข่เค็มปรับเป็นโหมด 3D ให้จ้า)', 'warning');
+        } else if (err.name === 'SecurityError') {
+          msg = '⚠️ ติดข้อจำกัดความปลอดภัยของเบราว์เซอร์ (เปิดโหมด 3D จำลองแทน)';
+          setMascot('เนื่องจากระบบความปลอดภัยของเบราว์เซอร์ไม่อนุญาตให้เปิดกล้องในหน้านี้ น้องไข่เค็มพาเล่นในโหมด 3D จำลองแทนได้ครบ 100% เลยจ้า!', 'warning');
+        } else if (err.name === 'NotFoundError') {
+          msg = '⚠️ ไม่พบอุปกรณ์กล้องบนเครื่องนี้';
+        } else {
+          msg = '⚠️ เปิดกล้องไม่สำเร็จ (' + (err.message || err.name) + ')';
+        }
+        showToast(msg, 4500);
+        switchTo3DMode();
+        return false;
+      }
+    }
+
+    function stopARCamera() {
+      if (arStream) {
+        arStream.getTracks().forEach(track => track.stop());
+        arStream = null;
+      }
+      const video = document.getElementById('camera-feed');
+      if (video) {
+        video.srcObject = null;
+        video.style.display = 'none';
+      }
+      if (scene) {
+        scene.background = new THREE.Color(0xf1f5f9);
+      }
+      if (tableGroup) {
+        tableGroup.position.set(0, 0, 0);
+        tableGroup.scale.set(1, 1, 1);
+      }
+      GAME_STATE.mode = '3d';
+      document.getElementById('ar-reticle').style.display = 'none';
+      document.getElementById('btn-mode-toggle').textContent = '🔄';
+    }
+
+    function switchTo3DMode() {
+      stopARCamera();
+      showToast('สลับเข้าสู่โหมดจำลอง 3D');
+    }
+
+    /* ==========================================================
+       9. EVENT LISTENERS SETUP
+       ========================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      init3D();
+
+      document.getElementById('btn-audio-toggle').addEventListener('click', () => {
+        const isMuted = sound.toggleMute();
+        document.getElementById('btn-audio-toggle').textContent = isMuted ? '🔇' : '🔊';
+        showToast(isMuted ? 'ปิดเสียงเรียบร้อย' : 'เปิดเสียงแล้ว');
+      });
+
+      document.getElementById('btn-mode-toggle').addEventListener('click', async () => {
+        if (GAME_STATE.mode === '3d') {
+          await startARCamera();
+        } else {
+          switchTo3DMode();
+        }
+      });
+
+      document.getElementById('btn-help-hint').addEventListener('click', () => {
+        sound.playTone(400, 'sine', 0.15, 0.15);
+        GAME_STATE.hintsUsed++;
+        let hintMsg = '';
+        const s = GAME_STATE.currentStage;
+        if (s === 1) hintMsg = '💡 คำใบ้: เลือกไข่ที่เปลือกเนียน ผิวสะอาด ไม่มีรอยเส้นแตกหรือคราบดินนะ';
+        else if (s === 2) hintMsg = '💡 คำใบ้: อย่าลืมถูในอ่างน้ำให้ครบ 100% และใช้ผ้าเช็ดให้แห้ง 100% จึงจะกดผ่านได้จ้า';
+        else if (s === 3) hintMsg = '💡 คำใบ้: สูตร 3:1:1 คือ ดินสอพอง 3 ช้อน, เกลือ 1 ช้อน, น้ำ 1 ช้อน';
+        else if (s === 4) hintMsg = '💡 คำใบ้: หมุนไข่ดูทุกด้าน หากด้านไหนยังเป็นสีไข่อยู่ให้กดปุ่มปาดดินสอพองจนครบ 100%';
+        else if (s === 5) hintMsg = '💡 คำใบ้: กลิ้งไข่ในถาดแกลบดำให้ทั่วทั้งฟองเพื่อกันไข่ติดกัน';
+        else if (s === 6) hintMsg = '💡 คำใบ้: ไข่เค็มควรหมักไว้ในที่แห้ง อากาศถ่ายเท ไม่ต้องแช่เย็นจ้า';
+        else if (s === 7) hintMsg = '💡 คำใบ้: ไข่ดาวเค็มใช้เวลา 7-10 วัน ส่วนไข่เค็มต้มใช้เวลา 10-14 วัน';
+        setMascot(hintMsg, 'thinking');
+        showToast('ขอคำใบ้ช่วยเหลือ');
+      });
+
+      document.getElementById('btn-start-game').addEventListener('click', () => {
+        const nameInput = document.getElementById('input-student-name').value.trim();
+        if (!nameInput) {
+          showToast('⚠️ กรุณากรอกชื่อ-นามสกุลก่อนเริ่มเล่นนะ');
+          return;
+        }
+        GAME_STATE.student.name = nameInput;
+        GAME_STATE.student.no = document.getElementById('input-student-no').value.trim() || '-';
+        GAME_STATE.student.class = document.getElementById('input-student-class').value.trim() || '-';
+        GAME_STATE.startTime = Date.now();
+
+        sound.init();
+        sound.playCorrect();
+        document.getElementById('modal-welcome').style.display = 'none';
+        if (GAME_STATE.mode === 'ar') {
+          startARCamera();
+        }
+        setStage(1);
+      });
+
+      document.getElementById('select-mode-3d').addEventListener('click', function() {
+        GAME_STATE.mode = '3d';
+        this.className = 'btn btn-primary';
+        document.getElementById('select-mode-ar').className = 'btn btn-outline';
+      });
+
+      document.getElementById('select-mode-ar').addEventListener('click', function() {
+        GAME_STATE.mode = 'ar';
+        this.className = 'btn btn-primary';
+        document.getElementById('select-mode-3d').className = 'btn btn-outline';
+      });
+
+      document.getElementById('btn-open-teacher-mode').addEventListener('click', openTeacherDashboard);
+      document.getElementById('btn-close-teacher').addEventListener('click', () => {
+        document.getElementById('modal-teacher').style.display = 'none';
+        document.getElementById('modal-welcome').style.display = 'flex';
+      });
+      document.getElementById('btn-submit-pin').addEventListener('click', verifyTeacherPIN);
+      document.getElementById('btn-refresh-teacher-data').addEventListener('click', () => {
+        loadTeacherData('123');
+      });
+
+      document.getElementById('btn-go-sorting').addEventListener('click', initCardSorting);
+      document.getElementById('btn-show-review').addEventListener('click', () => {
+        document.getElementById('modal-review').style.display = 'flex';
+      });
+      document.getElementById('btn-close-review').addEventListener('click', () => {
+        document.getElementById('modal-review').style.display = 'none';
+      });
+      document.getElementById('btn-restart-game').addEventListener('click', () => {
+        window.location.reload();
+      });
+
+      document.getElementById('btn-reset-sorting').addEventListener('click', initCardSorting);
+      document.getElementById('btn-verify-sorting').addEventListener('click', verifySortedSequence);
+      document.getElementById('btn-badge-done').addEventListener('click', () => {
+        document.getElementById('modal-badge-award').style.display = 'none';
+        document.getElementById('modal-summary').style.display = 'flex';
+      });
+    });
+  </script>
+</body>
+</html>

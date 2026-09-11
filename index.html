@@ -1271,30 +1271,46 @@
       }
 
       if (type === 'cracked') {
-        ctx.strokeStyle = '#475569';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 3.2;
         ctx.beginPath();
-        ctx.moveTo(220, 180);
-        ctx.lineTo(250, 240);
-        ctx.lineTo(290, 260);
-        ctx.lineTo(270, 310);
-        ctx.lineTo(310, 360);
+        // Main fracture starting visible on the front and wrapping across the side
+        ctx.moveTo(230, 170);
+        ctx.lineTo(255, 225);
+        ctx.lineTo(290, 250);
+        ctx.lineTo(335, 275);
+        ctx.lineTo(380, 310);
+        ctx.lineTo(415, 360);
         ctx.stroke();
 
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
-        ctx.moveTo(250, 240);
-        ctx.lineTo(220, 280);
-        ctx.moveTo(290, 260);
-        ctx.lineTo(330, 270);
+        ctx.moveTo(255, 225);
+        ctx.lineTo(225, 270);
+        ctx.lineTo(210, 315);
+        ctx.moveTo(290, 250);
+        ctx.lineTo(315, 230);
+        ctx.moveTo(335, 275);
+        ctx.lineTo(365, 255);
+        ctx.lineTo(400, 260);
         ctx.stroke();
       } else if (type === 'dirty') {
-        ctx.fillStyle = 'rgba(120, 53, 15, 0.75)';
-        for (let i = 0; i < 24; i++) {
+        ctx.fillStyle = 'rgba(120, 53, 15, 0.78)';
+        // Mud splatters starting on front and wrapping around the side
+        for (let i = 0; i < 32; i++) {
           ctx.beginPath();
-          const x = 180 + Math.random() * 160;
-          const y = 180 + Math.random() * 160;
-          const r = 6 + Math.random() * 18;
+          const x = 200 + Math.random() * 210;
+          const y = 170 + Math.random() * 190;
+          const r = 5 + Math.random() * 20;
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.fillStyle = 'rgba(101, 44, 12, 0.85)';
+        for (let i = 0; i < 16; i++) {
+          ctx.beginPath();
+          const x = 220 + Math.random() * 180;
+          const y = 190 + Math.random() * 150;
+          const r = 3 + Math.random() * 10;
           ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.fill();
         }
@@ -1648,7 +1664,7 @@
       switch (stageNum) {
         case 1:
           badgeText.textContent = 'ด่านที่ 1 : นักคัดไข่มือโปร';
-          setMascot('ลองใช้นิ้วชี้ ชี้ค้างไว้ที่ไข่เป็ดฟองที่สมบูรณ์ 1 วินาที เพื่อเลือก (เลือกให้ครบ 3 ฟองนะ!)', 'thinking');
+          setMascot('จีบนิ้วจับหมุนดูไข่ให้รอบฟอง 360° เมื่อมั่นใจว่าไม่มีรอยแตกร้าว ให้ชี้นิ้วค้างไว้ 1 วินาทีเพื่อเลือกจ้า!', 'thinking');
           setupStage1Eggs();
           stage1Eggs.forEach(e => e.visible = true);
           camera.position.set(0, 1.7, 3.6);
@@ -1658,7 +1674,7 @@
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
               <div style="text-align: left;">
                 <h3 style="font-size: 16px; font-weight: 700; color: #1f2937; margin: 0;">ภารกิจ: คัดเลือกไข่เป็ดสมบูรณ์</h3>
-                <p style="margin: 3px 0 0; font-size: 13px; color: #4b5563;">👉 ใช้นิ้วชี้ <b>ชี้ค้างไว้ที่ไข่ 1 วินาที</b> เพื่อเลือกฟองที่สมบูรณ์ (หรือคลิกเลือก)</p>
+                <p style="margin: 3px 0 0; font-size: 13px; color: #4b5563;">🤏 <b>จีบนิ้วจับหมุนดูไข่ 360°</b> ➔ มั่นใจแล้วให้ 👉 <b>ชี้นิ้วค้างไว้ 1 วินาที</b> เพื่อเลือก</p>
               </div>
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span id="s1-egg-counter" class="badge-pill" style="font-size: 14px; padding: 6px 14px; font-weight: 700; background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe;">คัดเลือกได้แล้ว: 0 / 3 ฟอง</span>
@@ -2642,6 +2658,7 @@
     let kneadAngularAccum = 0;
     let lastActionTime = 0;
     let isEggGrabbed = false;
+    let grabbedStage1Egg = null;
     let isPointerDragging = false;
     let lastWashTime = 0;
     let lastDryTime = 0;
@@ -2778,6 +2795,42 @@
     function tryGrabEgg(screenX, screenY) {
       const stage = GAME_STATE.currentStage;
 
+      // Stage 1: Grab Egg in-place to Rotate & Inspect 360° (Option B)
+      if (stage === 1) {
+        let candidate = null;
+        let minDist = 130;
+        const raycaster = new THREE.Raycaster();
+        const mouseNDC = new THREE.Vector2(
+          (screenX / window.innerWidth) * 2 - 1,
+          -(screenY / window.innerHeight) * 2 + 1
+        );
+        raycaster.setFromCamera(mouseNDC, camera);
+        const intersects = raycaster.intersectObjects(stage1Eggs, true);
+        if (intersects.length > 0 && !intersects[0].object.userData.isSelected) {
+          candidate = intersects[0].object;
+        } else {
+          for (const egg of stage1Eggs) {
+            if (!egg || !egg.visible || egg.userData.isSelected) continue;
+            const sp = getObjectScreenPos(egg);
+            const dist = Math.hypot(screenX - sp.x, screenY - sp.y);
+            if (dist < minDist) {
+              minDist = dist;
+              candidate = egg;
+            }
+          }
+        }
+
+        if (candidate) {
+          grabbedStage1Egg = candidate;
+          isEggGrabbed = true;
+          sound.playTone(520, 'sine', 0.08, 0.15);
+          candidate.scale.set(1.15, 1.15, 1.15);
+          showToast('🔄 หมุนดูไข่ 360° เพื่อตรวจเช็กรอบฟอง', 1400);
+          return true;
+        }
+        return false;
+      }
+
       // Stage 3: Grab 3D Ingredient Containers (ดินสอพอง, เกลือ, น้ำ)
       if (stage === 3) {
         const containers = [dinContainerMesh, saltContainerMesh, waterContainerMesh];
@@ -2840,6 +2893,15 @@
     function updateGrabbedEggPosition(screenX, screenY, moveDist = 0) {
       const stage = GAME_STATE.currentStage;
       const now = Date.now();
+
+      // Stage 1: Rotate Egg in-place 360° to Inspect
+      if (stage === 1 && grabbedStage1Egg) {
+        const dx = screenX - lastHandPos.x;
+        const dy = screenY - lastHandPos.y;
+        grabbedStage1Egg.rotation.y += dx * 0.02;
+        grabbedStage1Egg.rotation.x += dy * 0.02;
+        return;
+      }
 
       // Stage 3: Moving & Pouring Ingredient into Basin
       if (stage === 3 && isIngredientGrabbed && grabbedIngredient) {
@@ -2962,6 +3024,15 @@
     }
 
     function releaseGrabbedEgg() {
+      // Stage 1: Release grabbed stage 1 egg
+      if (grabbedStage1Egg) {
+        grabbedStage1Egg.scale.set(1.0, 1.0, 1.0);
+        grabbedStage1Egg = null;
+        isEggGrabbed = false;
+        sound.playTone(420, 'sine', 0.05, 0.1);
+        return;
+      }
+
       if (isIngredientGrabbed && grabbedIngredient) {
         isIngredientGrabbed = false;
         grabbedIngredient.scale.set(1.0, 1.0, 1.0);
@@ -3106,74 +3177,84 @@
             }
           }
 
-          // Stage 1: Point & Dwell Hover Selection Logic
+          // Stage 1: Point & Dwell Hover Selection Logic (Option B)
           if (isStage1) {
-            const now = Date.now();
-            const dwellSvg = document.getElementById('dwell-svg');
-            const dwellCircle = document.getElementById('dwell-progress-circle');
-
-            let pointedEgg = null;
-            let minDistance = 110;
-
-            for (const egg of stage1Eggs) {
-              if (!egg || !egg.visible || egg.userData.isSelected) continue;
-              const sp = getObjectScreenPos(egg);
-              const dist = Math.hypot(indexX - sp.x, indexY - sp.y);
-              if (dist < minDistance) {
-                minDistance = dist;
-                pointedEgg = egg;
-              }
-            }
-
-            if (pointedEgg && now > dwellCooldownUntil) {
-              isNearInteractable = true;
-              if (hoveredEggId === pointedEgg.userData.id) {
-                const elapsed = now - dwellStartTime;
-                const progress = Math.min(1, elapsed / DWELL_TARGET_MS);
-                if (dwellSvg) dwellSvg.style.display = 'block';
-                if (dwellCircle) {
-                  const offset = 150.8 * (1 - progress);
-                  dwellCircle.style.strokeDashoffset = offset;
-                }
-                if (cursorLabel) {
-                  cursorLabel.style.display = 'block';
-                  cursorLabel.textContent = `👉 กำลังเลือก... ${Math.round(progress * 100)}%`;
-                }
-                if (cursorDot) cursorDot.style.backgroundColor = '#22c55e';
-                cursorEl.style.borderColor = '#22c55e';
-
-                if (pointedEgg.userData.basePos) {
-                  pointedEgg.position.y = pointedEgg.userData.basePos[1] + 0.08 * Math.sin(now * 0.008);
-                }
-
-                if (progress >= 1.0) {
-                  selectEggDirectly(pointedEgg.userData.id);
-                  dwellCooldownUntil = now + 1200;
-                  hoveredEggId = -1;
-                  dwellStartTime = 0;
-                  if (dwellSvg) dwellSvg.style.display = 'none';
-                  if (cursorLabel) cursorLabel.style.display = 'none';
-                }
-              } else {
-                if (hoveredEggId >= 0 && stage1Eggs[hoveredEggId] && !stage1Eggs[hoveredEggId].userData.isSelected && stage1Eggs[hoveredEggId].userData.basePos) {
-                  stage1Eggs[hoveredEggId].position.y = stage1Eggs[hoveredEggId].userData.basePos[1];
-                }
-                hoveredEggId = pointedEgg.userData.id;
-                dwellStartTime = now;
-                if (dwellSvg) dwellSvg.style.display = 'block';
-                if (dwellCircle) dwellCircle.style.strokeDashoffset = '150.8';
-                if (cursorLabel) {
-                  cursorLabel.style.display = 'block';
-                  cursorLabel.textContent = '👉 ชี้ค้างไว้ 1 วินาที';
-                }
-              }
-            } else {
+            if (currentlyPinching || isEggGrabbed) {
               if (hoveredEggId >= 0 && stage1Eggs[hoveredEggId] && !stage1Eggs[hoveredEggId].userData.isSelected && stage1Eggs[hoveredEggId].userData.basePos) {
                 stage1Eggs[hoveredEggId].position.y = stage1Eggs[hoveredEggId].userData.basePos[1];
               }
               hoveredEggId = -1;
               dwellStartTime = 0;
+              const dwellSvg = document.getElementById('dwell-svg');
               if (dwellSvg) dwellSvg.style.display = 'none';
+            } else {
+              const now = Date.now();
+              const dwellSvg = document.getElementById('dwell-svg');
+              const dwellCircle = document.getElementById('dwell-progress-circle');
+
+              let pointedEgg = null;
+              let minDistance = 110;
+
+              for (const egg of stage1Eggs) {
+                if (!egg || !egg.visible || egg.userData.isSelected) continue;
+                const sp = getObjectScreenPos(egg);
+                const dist = Math.hypot(indexX - sp.x, indexY - sp.y);
+                if (dist < minDistance) {
+                  minDistance = dist;
+                  pointedEgg = egg;
+                }
+              }
+
+              if (pointedEgg && now > dwellCooldownUntil) {
+                isNearInteractable = true;
+                if (hoveredEggId === pointedEgg.userData.id) {
+                  const elapsed = now - dwellStartTime;
+                  const progress = Math.min(1, elapsed / DWELL_TARGET_MS);
+                  if (dwellSvg) dwellSvg.style.display = 'block';
+                  if (dwellCircle) {
+                    const offset = 150.8 * (1 - progress);
+                    dwellCircle.style.strokeDashoffset = offset;
+                  }
+                  if (cursorLabel) {
+                    cursorLabel.style.display = 'block';
+                    cursorLabel.textContent = `👉 กำลังเลือก... ${Math.round(progress * 100)}%`;
+                  }
+                  if (cursorDot) cursorDot.style.backgroundColor = '#22c55e';
+                  cursorEl.style.borderColor = '#22c55e';
+
+                  if (pointedEgg.userData.basePos) {
+                    pointedEgg.position.y = pointedEgg.userData.basePos[1] + 0.08 * Math.sin(now * 0.008);
+                  }
+
+                  if (progress >= 1.0) {
+                    selectEggDirectly(pointedEgg.userData.id);
+                    dwellCooldownUntil = now + 1200;
+                    hoveredEggId = -1;
+                    dwellStartTime = 0;
+                    if (dwellSvg) dwellSvg.style.display = 'none';
+                    if (cursorLabel) cursorLabel.style.display = 'none';
+                  }
+                } else {
+                  if (hoveredEggId >= 0 && stage1Eggs[hoveredEggId] && !stage1Eggs[hoveredEggId].userData.isSelected && stage1Eggs[hoveredEggId].userData.basePos) {
+                    stage1Eggs[hoveredEggId].position.y = stage1Eggs[hoveredEggId].userData.basePos[1];
+                  }
+                  hoveredEggId = pointedEgg.userData.id;
+                  dwellStartTime = now;
+                  if (dwellSvg) dwellSvg.style.display = 'block';
+                  if (dwellCircle) dwellCircle.style.strokeDashoffset = '150.8';
+                  if (cursorLabel) {
+                    cursorLabel.style.display = 'block';
+                    cursorLabel.textContent = '👉 ชี้ค้างไว้ 1 วินาที เพื่อเลือก';
+                  }
+                }
+              } else {
+                if (hoveredEggId >= 0 && stage1Eggs[hoveredEggId] && !stage1Eggs[hoveredEggId].userData.isSelected && stage1Eggs[hoveredEggId].userData.basePos) {
+                  stage1Eggs[hoveredEggId].position.y = stage1Eggs[hoveredEggId].userData.basePos[1];
+                }
+                hoveredEggId = -1;
+                dwellStartTime = 0;
+                if (dwellSvg) dwellSvg.style.display = 'none';
+              }
             }
           }
 
@@ -3184,7 +3265,9 @@
             if (cursorDot) cursorDot.style.backgroundColor = '#22c55e';
             if (cursorLabel) {
               cursorLabel.style.display = 'block';
-              if (isIngredientGrabbed && grabbedIngredient) {
+              if (isStage1 && (grabbedStage1Egg || isEggGrabbed)) {
+                cursorLabel.textContent = '🔄 กำลังหมุนดูไข่ 360°';
+              } else if (isIngredientGrabbed && grabbedIngredient) {
                 cursorLabel.textContent = '🥣 เท ' + grabbedIngredient.userData.name;
               } else if (isEggGrabbed) {
                 cursorLabel.textContent = '🥚 กำลังถือไข่';
@@ -3275,23 +3358,8 @@
     function handlePinchClick(screenX, screenY) {
       sound.playTone(520, 'sine', 0.08, 0.15);
 
-      // 1. Raycast to 3D scene (for eggs in Stage 1)
-      if (camera && scene && GAME_STATE.currentStage === 1) {
-        const raycaster = new THREE.Raycaster();
-        const mouseNDC = new THREE.Vector2(
-          (screenX / window.innerWidth) * 2 - 1,
-          -(screenY / window.innerHeight) * 2 + 1
-        );
-        raycaster.setFromCamera(mouseNDC, camera);
-        const intersects = raycaster.intersectObjects(stage1Eggs, true);
-        if (intersects.length > 0) {
-          const hitMesh = intersects[0].object;
-          if (hitMesh.userData && typeof hitMesh.userData.id !== 'undefined') {
-            selectEggDirectly(hitMesh.userData.id);
-            return;
-          }
-        }
-      }
+      // Note: In Stage 1, pinch is dedicated to grabbing & rotating eggs in-place.
+      // Final egg selection is performed via Index Finger Point & Dwell (1.0s) or direct mouse click.
 
       // 2. Interactive DOM elements (Buttons, Cards, Recipe ingredients)
       const hitEl = document.elementFromPoint(screenX, screenY);
@@ -3529,14 +3597,24 @@
       init3D();
       initHandTracking();
 
-      // Mouse & Touch 3D Egg Dragging Support
+      // Mouse & Touch 3D Egg Dragging & Rotation Support
       if (renderer && renderer.domElement) {
+        let pointerStartX = 0;
+        let pointerStartY = 0;
+        let pointerMoved = false;
+        let pointerCandidateEggId = -1;
+
         renderer.domElement.addEventListener('pointerdown', (e) => {
           const rect = renderer.domElement.getBoundingClientRect();
           const screenX = e.clientX - rect.left;
           const screenY = e.clientY - rect.top;
+          pointerStartX = screenX;
+          pointerStartY = screenY;
+          pointerMoved = false;
+          pointerCandidateEggId = -1;
+          lastHandPos = { x: screenX, y: screenY };
 
-          // Stage 1: Direct mouse/touch click on 3D egg
+          // Stage 1: Check if clicking or grabbing a 3D egg to rotate
           if (GAME_STATE.currentStage === 1 && camera && scene) {
             const raycaster = new THREE.Raycaster();
             const mouseNDC = new THREE.Vector2(
@@ -3545,10 +3623,11 @@
             );
             raycaster.setFromCamera(mouseNDC, camera);
             const intersects = raycaster.intersectObjects(stage1Eggs, true);
-            if (intersects.length > 0) {
-              const hit = intersects[0].object;
-              if (hit.userData && typeof hit.userData.id !== 'undefined') {
-                selectEggDirectly(hit.userData.id);
+            if (intersects.length > 0 && !intersects[0].object.userData.isSelected) {
+              pointerCandidateEggId = intersects[0].object.userData.id;
+              if (tryGrabEgg(screenX, screenY)) {
+                isPointerDragging = true;
+                if (controls) controls.enabled = false;
                 return;
               }
             }
@@ -3565,16 +3644,26 @@
             const rect = renderer.domElement.getBoundingClientRect();
             const screenX = e.clientX - rect.left;
             const screenY = e.clientY - rect.top;
+            if (Math.hypot(screenX - pointerStartX, screenY - pointerStartY) > 6) {
+              pointerMoved = true;
+            }
             updateGrabbedEggPosition(screenX, screenY);
+            lastHandPos = { x: screenX, y: screenY };
           }
         });
 
         window.addEventListener('pointerup', () => {
           if (isPointerDragging) {
             isPointerDragging = false;
+            // If in Stage 1 and pointer was not dragged: treat as a direct click selection!
+            if (GAME_STATE.currentStage === 1 && !pointerMoved && pointerCandidateEggId >= 0) {
+              selectEggDirectly(pointerCandidateEggId);
+            }
             releaseGrabbedEgg();
             if (controls) controls.enabled = true;
           }
+          pointerCandidateEggId = -1;
+          pointerMoved = false;
         });
       }
 

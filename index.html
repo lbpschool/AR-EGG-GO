@@ -286,6 +286,116 @@
       transform: none;
     }
 
+    /* Stage 2 Glassmorphism Status HUD */
+    .stage2-glass-card {
+      background: rgba(255, 255, 255, 0.65) !important;
+      backdrop-filter: blur(18px) !important;
+      -webkit-backdrop-filter: blur(18px) !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+      border-radius: 20px !important;
+      box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+      max-width: 520px !important;
+      padding: 10px 20px !important;
+      margin: 0 auto;
+    }
+
+    .s2-glass-meter-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      width: 100%;
+    }
+
+    @media (max-width: 600px) {
+      .s2-glass-meter-container {
+        flex-direction: column;
+        gap: 10px;
+      }
+    }
+
+    .s2-glass-meter-item {
+      flex: 1;
+      min-width: 180px;
+      text-align: left;
+    }
+
+    .s2-meter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .s2-meter-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .s2-title-clean {
+      color: #0369a1;
+    }
+
+    .s2-title-dry {
+      color: #c2410c;
+    }
+
+    .s2-meter-icon {
+      font-size: 15px;
+    }
+
+    .s2-meter-num {
+      font-size: 14px;
+      font-weight: 800;
+      font-family: 'Prompt', monospace, sans-serif;
+    }
+
+    .s2-num-clean {
+      color: #0284c7;
+    }
+
+    .s2-num-dry {
+      color: #ea580c;
+    }
+
+    .s2-progress-track {
+      height: 10px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+      position: relative;
+    }
+
+    .s2-track-clean {
+      background: rgba(2, 132, 199, 0.12);
+      border: 1px solid rgba(2, 132, 199, 0.22);
+    }
+
+    .s2-track-dry {
+      background: rgba(234, 88, 12, 0.12);
+      border: 1px solid rgba(234, 88, 12, 0.22);
+    }
+
+    .s2-progress-bar {
+      height: 100%;
+      border-radius: 10px;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .s2-bar-clean {
+      background: linear-gradient(90deg, #38bdf8, #0284c7);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    }
+
+    .s2-bar-dry {
+      background: linear-gradient(90deg, #fbbf24, #ea580c);
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+    }
+
     .progress-bar-container {
       width: 100%;
       height: 16px;
@@ -1517,6 +1627,9 @@
       isPointerDragging = false;
       const badgeText = document.getElementById('stage-badge-text');
       const actionCard = document.getElementById('dynamic-action-card');
+      if (actionCard) {
+        actionCard.className = 'action-card';
+      }
 
       if (waterBasinMesh) waterBasinMesh.visible = false;
       if (clothMesh) clothMesh.visible = false;
@@ -1563,40 +1676,37 @@
           clothMesh.visible = true;
           camera.position.set(0, 2.8, 3.2);
 
+          actionCard.className = 'action-card stage2-glass-card';
           actionCard.innerHTML = `
-            <h3>ภารกิจ: ล้างและเช็ดไข่ให้แห้ง</h3>
-            <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 8px 12px; margin: 8px 0; font-size: 13px; color: #065f46; text-align: left; line-height: 1.5;">
-              <b>วิธีเล่น:</b> 🤏 <b>จีบนิ้วเพื่อหยิบไข่</b> (หรือคลิกลาก) ➔ ลากไปจุ่มใน <b>อ่างน้ำ (ซ้าย)</b> เพื่อล้าง ➔ แล้วลากมาถูบน <b>ผ้าเหลือง (ขวา)</b> เพื่อเช็ดให้แห้งสนิท
-            </div>
-            
-            <div style="text-align: left; margin: 8px 0;">
-              <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
-                <span>💧 ระดับความสะอาด:</span> <span id="s2-clean-val">0%</span>
-              </div>
-              <div class="progress-bar-container">
-                <div id="s2-clean-progress" class="progress-bar-fill" style="width: 0%;"></div>
+            <div class="s2-glass-meter-container">
+              <!-- Cleanliness Meter -->
+              <div class="s2-glass-meter-item">
+                <div class="s2-meter-header">
+                  <span class="s2-meter-title s2-title-clean">
+                    <span class="s2-meter-icon">💧</span>
+                    <span>ระดับความสะอาด</span>
+                  </span>
+                  <span id="s2-clean-val" class="s2-meter-num s2-num-clean">${GAME_STATE.stage2.cleanPercent}%</span>
+                </div>
+                <div class="s2-progress-track s2-track-clean">
+                  <div id="s2-clean-progress" class="s2-progress-bar s2-bar-clean" style="width: ${GAME_STATE.stage2.cleanPercent}%;"></div>
+                </div>
               </div>
 
-              <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
-                <span>💨 ระดับความแห้ง:</span> <span id="s2-dry-val">0%</span>
-              </div>
-              <div class="progress-bar-container">
-                <div id="s2-dry-progress" class="progress-bar-fill" style="width: 0%; background: linear-gradient(90deg, #f59e0b, #d97706);"></div>
+              <!-- Dryness Meter -->
+              <div class="s2-glass-meter-item">
+                <div class="s2-meter-header">
+                  <span class="s2-meter-title s2-title-dry">
+                    <span class="s2-meter-icon">💨</span>
+                    <span>ระดับความแห้ง</span>
+                  </span>
+                  <span id="s2-dry-val" class="s2-meter-num s2-num-dry">${GAME_STATE.stage2.dryPercent}%</span>
+                </div>
+                <div class="s2-progress-track s2-track-dry">
+                  <div id="s2-dry-progress" class="s2-progress-bar s2-bar-dry" style="width: ${GAME_STATE.stage2.dryPercent}%;"></div>
+                </div>
               </div>
             </div>
-
-            <div style="display: flex; gap: 8px; margin-top: 10px;">
-              <button id="btn-s2-wash" class="btn btn-outline" style="flex: 1;" onclick="actionWashEgg()">
-                🌊 ถู/ล้างในอ่างน้ำ
-              </button>
-              <button id="btn-s2-dry" class="btn btn-outline" style="flex: 1;" onclick="actionDryEgg()">
-                🧣 ใช้ผ้าเช็ดไข่
-              </button>
-            </div>
-
-            <button id="btn-s2-next" class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="checkStage2Completion()">
-              ไปขั้นตอนต่อไป ➔
-            </button>
           `;
           break;
 
@@ -1971,12 +2081,13 @@
         GAME_STATE.stage2.isDry = true;
         if (eggMesh) eggMesh.material.roughness = 0.45; // matte clean shell
         sound.playTriumph();
-        showToast('✨ ไข่สะอาดและแห้งสนิท 100% แล้ว! กดปุ่มไปขั้นตอนต่อไปได้เลย', 3000);
+        showToast('✨ ไข่สะอาดและแห้งสนิท 100% แล้ว! กำลังไปยังด่านต่อไป...', 2500);
         setMascot('ยอดเยี่ยมมาก! ไข่สะอาดและแห้งสนิท 100% แล้ว พร้อมไปผสมสูตรลับ 3:1:1 ในด่านที่ 3 ได้เลย!', 'celebrate');
-        const nextBtn = document.getElementById('btn-s2-next');
-        if (nextBtn) {
-          nextBtn.style.boxShadow = '0 0 20px rgba(34, 197, 94, 0.8)';
+        const nextNavBtn = document.getElementById('btn-next-stage');
+        if (nextNavBtn) {
+          nextNavBtn.style.boxShadow = '0 0 24px rgba(16, 185, 129, 0.9)';
         }
+        setTimeout(() => setStage(3), 1600);
       }
     }
 

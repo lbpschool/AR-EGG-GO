@@ -70,7 +70,8 @@
       pointer-events: none;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: flex-start;
+      gap: 2px;
     }
 
     .interactive {
@@ -122,57 +123,85 @@
       transform: scale(0.92);
     }
 
+    .top-mission-panel {
+      padding: 4px 18px 6px;
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      pointer-events: none;
+      animation: slideDown 0.35s ease-out;
+    }
+
+    .action-card {
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      width: 100%;
+      max-width: 640px;
+      padding: 10px 18px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      border: 1.5px solid rgba(255, 255, 255, 0.85);
+      text-align: center;
+      pointer-events: auto;
+      transition: all 0.25s ease;
+    }
+
     .mascot-container {
-      margin: 10px 18px;
+      margin: 2px 18px 6px;
       display: flex;
       align-items: flex-start;
-      gap: 12px;
+      gap: 10px;
       animation: slideDown 0.4s ease-out;
+      pointer-events: none;
     }
 
     @keyframes slideDown {
-      from { transform: translateY(-30px); opacity: 0; }
+      from { transform: translateY(-20px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
 
     .mascot-avatar {
-      width: 76px;
-      height: 76px;
+      width: 52px;
+      height: 52px;
       background: #fef08a;
-      border: 3px solid #f59e0b;
+      border: 2.5px solid #f59e0b;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
       flex-shrink: 0;
       position: relative;
       animation: floatEgg 3s ease-in-out infinite alternate;
+      pointer-events: auto;
     }
 
     @keyframes floatEgg {
       0% { transform: translateY(0px) rotate(-3deg); }
-      100% { transform: translateY(-8px) rotate(3deg); }
+      100% { transform: translateY(-5px) rotate(3deg); }
     }
 
     .mascot-avatar-inner {
-      font-size: 42px;
+      font-size: 28px;
     }
 
     .mascot-bubble {
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      padding: 14px 18px;
-      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 8px 14px;
+      border-radius: 16px;
       border-top-left-radius: 4px;
-      box-shadow: var(--shadow-lg);
-      border: 2px solid #fed7aa;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+      border: 1.5px solid #fed7aa;
       flex-grow: 1;
-      max-width: 600px;
+      max-width: 540px;
+      pointer-events: auto;
     }
 
     .mascot-name {
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 700;
       color: #ea580c;
       text-transform: uppercase;
@@ -181,30 +210,10 @@
     }
 
     .mascot-text {
-      font-size: 16px;
-      line-height: 1.45;
+      font-size: 14px;
+      line-height: 1.4;
       font-weight: 500;
       color: var(--text-dark);
-    }
-
-    .bottom-panel {
-      padding: 16px 18px;
-      background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .action-card {
-      background: var(--card-bg);
-      width: 100%;
-      max-width: 580px;
-      padding: 16px 20px;
-      border-radius: var(--border-radius);
-      box-shadow: var(--shadow-lg);
-      border: 1px solid rgba(255,255,255,0.6);
-      text-align: center;
     }
 
     .progress-bar-container {
@@ -536,10 +545,15 @@
   <!-- Hand Tracking Visual Overlay Canvas -->
   <canvas id="hand-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:4;pointer-events:none;"></canvas>
 
-  <!-- Interactive Hand Cursor & Pinch Indicator -->
+  <!-- Interactive Hand Cursor & Dwell/Pinch Indicator -->
   <div id="hand-cursor" style="position:fixed;width:44px;height:44px;border-radius:50%;border:3px solid #10b981;background:rgba(16,185,129,0.2);transform:translate(-50%,-50%);pointer-events:none;z-index:9999;display:none;transition:border-color 0.15s, background-color 0.15s, transform 0.08s;box-shadow:0 0 16px rgba(16,185,129,0.6);">
+    <!-- SVG Circular Dwell Timer Ring -->
+    <svg id="dwell-svg" width="56" height="56" viewBox="0 0 56 56" style="position:absolute;top:-8px;left:-8px;transform:rotate(-90deg);display:none;pointer-events:none;">
+      <circle cx="28" cy="28" r="24" stroke="rgba(255,255,255,0.4)" stroke-width="4" fill="none" />
+      <circle id="dwell-progress-circle" cx="28" cy="28" r="24" stroke="#22c55e" stroke-width="4" fill="none" stroke-dasharray="150.8" stroke-dashoffset="150.8" stroke-linecap="round" />
+    </svg>
     <div id="hand-cursor-dot" style="position:absolute;top:50%;left:50%;width:10px;height:10px;border-radius:50%;background:#10b981;transform:translate(-50%,-50%);"></div>
-    <div id="hand-cursor-label" style="position:absolute;top:-28px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;font-size:12px;padding:2px 10px;border-radius:10px;white-space:nowrap;font-weight:700;display:none;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🤏 จีบจับ</div>
+    <div id="hand-cursor-label" style="position:absolute;top:-28px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;font-size:12px;padding:2px 10px;border-radius:10px;white-space:nowrap;font-weight:700;display:none;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🤏 จีบจับ</div>
   </div>
 
   <!-- Three.js Canvas Container -->
@@ -570,6 +584,14 @@
       </div>
     </div>
 
+    <!-- Top Floating Mission Action Card -->
+    <div class="top-mission-panel interactive">
+      <div class="action-card" id="dynamic-action-card">
+        <h3 id="card-action-title">กำลังโหลด...</h3>
+        <p id="card-action-desc">เตรียมความพร้อมสักครู่</p>
+      </div>
+    </div>
+
     <!-- Mascot Speech Area -->
     <div class="mascot-container interactive">
       <div class="mascot-avatar" id="mascot-icon-wrapper">
@@ -580,14 +602,6 @@
         <div class="mascot-text" id="mascot-dialogue-text">
           สวัสดีจ้า! ยินดีต้อนรับสู่ภารกิจพิชิตไข่เค็มดินสอพอง เรามาเริ่มคัดเลือกไข่เป็ดคุณภาพดีกันเถอะ!
         </div>
-      </div>
-    </div>
-
-    <!-- Bottom Interactive Control Area -->
-    <div class="bottom-panel interactive">
-      <div class="action-card" id="dynamic-action-card">
-        <h3 id="card-action-title">กำลังโหลด...</h3>
-        <p id="card-action-desc">เตรียมความพร้อมสักครู่</p>
       </div>
     </div>
 
@@ -1041,41 +1055,9 @@
     }
 
     function buildWorkbench() {
+      // 3D Table removed completely for seamless Holographic AR experience
       tableGroup = new THREE.Group();
       scene.add(tableGroup);
-
-      const tableGeo = new THREE.BoxGeometry(4.2, 0.15, 2.8);
-      const tableMat = new THREE.MeshStandardMaterial({
-        color: 0xd97706,
-        roughness: 0.6,
-        metalness: 0.1
-      });
-      const tableMesh = new THREE.Mesh(tableGeo, tableMat);
-      tableMesh.position.y = 0;
-      tableMesh.receiveShadow = true;
-      tableGroup.add(tableMesh);
-
-      const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 2.5);
-      const legMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.7 });
-      const positions = [
-        [-1.9, -1.25, -1.2],
-        [1.9, -1.25, -1.2],
-        [-1.9, -1.25, 1.2],
-        [1.9, -1.25, 1.2]
-      ];
-      positions.forEach(pos => {
-        const leg = new THREE.Mesh(legGeo, legMat);
-        leg.position.set(...pos);
-        tableGroup.add(leg);
-      });
-
-      const floorGeo = new THREE.PlaneGeometry(12, 12);
-      const floorMat = new THREE.ShadowMaterial({ opacity: 0.25 });
-      const floor = new THREE.Mesh(floorGeo, floorMat);
-      floor.rotation.x = -Math.PI / 2;
-      floor.position.y = -2.5;
-      floor.receiveShadow = true;
-      scene.add(floor);
     }
 
     function createEggTexture(type = 'good') {
@@ -1336,26 +1318,52 @@
       stage1Eggs = [];
 
       const eggGeo = createEggGeometry();
-      const eggConfigs = [
-        { type: 'good', pos: [-1.2, 0.38, -0.4], label: 'ไข่ดี 1' },
-        { type: 'cracked', pos: [-0.4, 0.38, -0.5], label: 'ไข่ร้าว' },
-        { type: 'good', pos: [0.4, 0.38, -0.4], label: 'ไข่ดี 2' },
-        { type: 'dirty', pos: [1.2, 0.38, -0.5], label: 'ไข่เปื้อนดิน' },
-        { type: 'cracked', pos: [-0.8, 0.38, 0.4], label: 'ไข่ร้าว 2' },
-        { type: 'good', pos: [0.0, 0.38, 0.5], label: 'ไข่ดี 3' },
-        { type: 'dirty', pos: [0.8, 0.38, 0.4], label: 'ไข่สกปรก' }
+
+      // 2 Rows x 3 Columns Grid Positions (Level with eyes/chest in AR, clear spacing)
+      const gridPositions = [
+        // Top Row (3 eggs)
+        [-1.15, 0.72, -0.22],
+        [0.0, 0.72, -0.22],
+        [1.15, 0.72, -0.22],
+        // Bottom Row (3 eggs)
+        [-1.15, -0.05, 0.18],
+        [0.0, -0.05, 0.18],
+        [1.15, -0.05, 0.18]
       ];
 
-      eggConfigs.forEach((cfg, index) => {
+      // Randomized egg types: exactly 3 good eggs, and 3 defective eggs
+      const defectTypes = ['cracked', 'dirty'];
+      const eggTypes = ['good', 'good', 'good'];
+      eggTypes.push(defectTypes[Math.floor(Math.random() * 2)]);
+      eggTypes.push(defectTypes[Math.floor(Math.random() * 2)]);
+      // Ensure variety in defects
+      if (!eggTypes.includes('cracked')) eggTypes.push('cracked');
+      else if (!eggTypes.includes('dirty')) eggTypes.push('dirty');
+      else eggTypes.push(defectTypes[Math.floor(Math.random() * 2)]);
+
+      // Shuffle positions randomly (Fisher-Yates)
+      for (let i = eggTypes.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [eggTypes[i], eggTypes[j]] = [eggTypes[j], eggTypes[i]];
+      }
+
+      gridPositions.forEach((pos, index) => {
+        const type = eggTypes[index];
         const mat = new THREE.MeshStandardMaterial({
-          map: createEggTexture(cfg.type),
-          roughness: 0.5
+          map: createEggTexture(type),
+          roughness: 0.45,
+          metalness: 0.05
         });
         const mesh = new THREE.Mesh(eggGeo, mat);
-        mesh.position.set(...cfg.pos);
-        mesh.rotation.z = (Math.random() - 0.5) * 0.4;
+        mesh.position.set(...pos);
+        // Natural organic random rotation
+        mesh.rotation.x = (Math.random() - 0.5) * 0.25;
+        mesh.rotation.y = (Math.random() - 0.5) * 0.4;
+        mesh.rotation.z = (Math.random() - 0.5) * 0.3;
+        const scaleVar = 0.96 + Math.random() * 0.08;
+        mesh.scale.set(scaleVar, scaleVar, scaleVar);
         mesh.castShadow = true;
-        mesh.userData = { id: index, type: cfg.type, isSelected: false };
+        mesh.userData = { id: index, type: type, isSelected: false, basePos: [...pos] };
         scene.add(mesh);
         stage1Eggs.push(mesh);
       });
@@ -1447,24 +1455,21 @@
       switch (stageNum) {
         case 1:
           badgeText.textContent = 'ด่านที่ 1 : นักคัดไข่มือโปร';
-          setMascot('ลองแตะเลือกไข่เป็ดที่สด เปลือกสะอาด สมบูรณ์ และไม่มีรอยแตกร้าว (เลือกให้ครบ 3 ฟองนะ!)', 'thinking');
+          setMascot('ลองใช้นิ้วชี้ ชี้ค้างไว้ที่ไข่เป็ดฟองที่สมบูรณ์ 1 วินาที เพื่อเลือก (เลือกให้ครบ 3 ฟองนะ!)', 'thinking');
+          setupStage1Eggs();
           stage1Eggs.forEach(e => e.visible = true);
-          camera.position.set(0, 3.5, 3.5);
-          controls.target.set(0, 0.4, 0);
+          camera.position.set(0, 1.7, 3.6);
+          controls.target.set(0, 0.35, 0);
 
           actionCard.innerHTML = `
-            <h3>ภารกิจ: คัดเลือกไข่เป็ดสมบูรณ์</h3>
-            <p style="margin: 6px 0 12px; color: #4b5563;">แตะที่ไข่ในโต๊ะ 3 มิติ หรือกดปุ่มคัดแยกด้านล่าง</p>
-            <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;">
-              <span id="s1-egg-counter" class="badge-pill" style="font-size: 15px; padding: 6px 14px;">คัดเลือกได้แล้ว: 0 / 3 ฟอง</span>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
-              <button class="btn btn-outline" onclick="selectEggDirectly(0)">🥚 ฟองที่ 1</button>
-              <button class="btn btn-outline" onclick="selectEggDirectly(1)">🥚 ฟองที่ 2</button>
-              <button class="btn btn-outline" onclick="selectEggDirectly(2)">🥚 ฟองที่ 3</button>
-              <button class="btn btn-outline" onclick="selectEggDirectly(3)">🥚 ฟองที่ 4</button>
-              <button class="btn btn-outline" onclick="selectEggDirectly(4)">🥚 ฟองที่ 5</button>
-              <button class="btn btn-outline" onclick="selectEggDirectly(5)">🥚 ฟองที่ 6</button>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+              <div style="text-align: left;">
+                <h3 style="font-size: 16px; font-weight: 700; color: #1f2937; margin: 0;">ภารกิจ: คัดเลือกไข่เป็ดสมบูรณ์</h3>
+                <p style="margin: 3px 0 0; font-size: 13px; color: #4b5563;">👉 ใช้นิ้วชี้ <b>ชี้ค้างไว้ที่ไข่ 1 วินาที</b> เพื่อเลือกฟองที่สมบูรณ์ (หรือคลิกเลือก)</p>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="s1-egg-counter" class="badge-pill" style="font-size: 14px; padding: 6px 14px; font-weight: 700; background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe;">คัดเลือกได้แล้ว: 0 / 3 ฟอง</span>
+              </div>
             </div>
           `;
           break;
@@ -1720,13 +1725,21 @@
       const egg = stage1Eggs[index];
       if (egg.userData.isSelected) return;
 
+      const baseY = (egg.userData.basePos && egg.userData.basePos[1] !== undefined) ? egg.userData.basePos[1] : egg.position.y;
+
       if (egg.userData.type === 'good') {
         egg.userData.isSelected = true;
-        egg.position.y += 0.3;
+        egg.position.y = baseY + 0.35;
+        if (egg.material) {
+          egg.material.emissive = new THREE.Color(0x22c55e);
+          egg.material.emissiveIntensity = 0.55;
+        }
+        spawnSparkleParticles(egg.position.x, egg.position.y, egg.position.z);
         sound.playCorrect();
         showToast('✔️ ถูกต้อง! ไข่ฟองนี้เปลือกสมบูรณ์ ไม่มีรอยร้าว');
         GAME_STATE.stage1.selectedEggs++;
-        document.getElementById('s1-egg-counter').textContent = 'คัดเลือกได้แล้ว: ' + GAME_STATE.stage1.selectedEggs + ' / 3 ฟอง';
+        const counterEl = document.getElementById('s1-egg-counter');
+        if (counterEl) counterEl.textContent = 'คัดเลือกได้แล้ว: ' + GAME_STATE.stage1.selectedEggs + ' / 3 ฟอง';
 
         if (GAME_STATE.stage1.selectedEggs >= 3) {
           setMascot('สุดยอดมาก! คัดไข่เป็ดคุณภาพเยี่ยมครบทั้ง 3 ฟองแล้ว', 'celebrate');
@@ -1735,12 +1748,22 @@
         }
       } else if (egg.userData.type === 'cracked') {
         sound.playWrong();
+        if (egg.material) {
+          egg.material.emissive = new THREE.Color(0xef4444);
+          egg.material.emissiveIntensity = 0.6;
+          setTimeout(() => { if (egg && egg.material) egg.material.emissive = new THREE.Color(0x000000); }, 900);
+        }
         GAME_STATE.stageMistakes.stage1++;
         if (GAME_STATE.scores.stage1 > 4) GAME_STATE.scores.stage1 -= 2;
         showToast('❌ ไข่มีรอยแตกร้าว ไม่ควรนำมาทำไข่เค็ม');
         setMascot('โอ๊ะโอ! ไข่ฟองนี้มีรอยแตกร้าว น้ำเกลือจะซึมเร็วเกินไปจนเน่าเสียได้จ้า ลองเลือกใหม่นะ', 'warning');
       } else {
         sound.playWrong();
+        if (egg.material) {
+          egg.material.emissive = new THREE.Color(0xef4444);
+          egg.material.emissiveIntensity = 0.6;
+          setTimeout(() => { if (egg && egg.material) egg.material.emissive = new THREE.Color(0x000000); }, 900);
+        }
         GAME_STATE.stageMistakes.stage1++;
         if (GAME_STATE.scores.stage1 > 4) GAME_STATE.scores.stage1 -= 2;
         showToast('❌ ไข่เปื้อนดินสกปรก ควรเลือกไข่ที่เปลือกสะอาดก่อน');
@@ -2349,6 +2372,12 @@
     let lastHuskRollTime = 0;
     const vfxParticles = [];
 
+    // Stage 1 Index Finger Point & Dwell Selection State
+    let hoveredEggId = -1;
+    let dwellStartTime = 0;
+    const DWELL_TARGET_MS = 1000;
+    let dwellCooldownUntil = 0;
+
     const HAND_CONNECTIONS = [
       [0, 1], [1, 2], [2, 3], [3, 4],       // Thumb
       [0, 5], [5, 6], [6, 7], [7, 8],       // Index
@@ -2749,8 +2778,9 @@
         const indexX = (1 - index.x) * canvas.width;
         const indexY = index.y * canvas.height;
 
-        const cursorX = (thumbX + indexX) / 2;
-        const cursorY = (thumbY + indexY) / 2;
+        const isStage1 = (GAME_STATE.currentStage === 1);
+        const cursorX = isStage1 ? indexX : (thumbX + indexX) / 2;
+        const cursorY = isStage1 ? indexY : (thumbY + indexY) / 2;
 
         // Calculate pinch distance
         const dx = thumb.x - index.x;
@@ -2775,7 +2805,7 @@
           cursorEl.style.top = cursorY + 'px';
 
           let isNearInteractable = false;
-          let hoverText = '🤏 จีบจับ';
+          let hoverText = isStage1 ? '👉 ชี้ค้างไว้' : '🤏 จีบจับ';
 
           if (eggMesh && eggMesh.visible && (GAME_STATE.currentStage === 2 || GAME_STATE.currentStage === 4 || GAME_STATE.currentStage === 5 || GAME_STATE.currentStage === 6)) {
             const eggScreen = getObjectScreenPos(eggMesh);
@@ -2800,6 +2830,77 @@
             }
           }
 
+          // Stage 1: Point & Dwell Hover Selection Logic
+          if (isStage1) {
+            const now = Date.now();
+            const dwellSvg = document.getElementById('dwell-svg');
+            const dwellCircle = document.getElementById('dwell-progress-circle');
+
+            let pointedEgg = null;
+            let minDistance = 110;
+
+            for (const egg of stage1Eggs) {
+              if (!egg || !egg.visible || egg.userData.isSelected) continue;
+              const sp = getObjectScreenPos(egg);
+              const dist = Math.hypot(indexX - sp.x, indexY - sp.y);
+              if (dist < minDistance) {
+                minDistance = dist;
+                pointedEgg = egg;
+              }
+            }
+
+            if (pointedEgg && now > dwellCooldownUntil) {
+              isNearInteractable = true;
+              if (hoveredEggId === pointedEgg.userData.id) {
+                const elapsed = now - dwellStartTime;
+                const progress = Math.min(1, elapsed / DWELL_TARGET_MS);
+                if (dwellSvg) dwellSvg.style.display = 'block';
+                if (dwellCircle) {
+                  const offset = 150.8 * (1 - progress);
+                  dwellCircle.style.strokeDashoffset = offset;
+                }
+                if (cursorLabel) {
+                  cursorLabel.style.display = 'block';
+                  cursorLabel.textContent = `👉 กำลังเลือก... ${Math.round(progress * 100)}%`;
+                }
+                if (cursorDot) cursorDot.style.backgroundColor = '#22c55e';
+                cursorEl.style.borderColor = '#22c55e';
+
+                if (pointedEgg.userData.basePos) {
+                  pointedEgg.position.y = pointedEgg.userData.basePos[1] + 0.08 * Math.sin(now * 0.008);
+                }
+
+                if (progress >= 1.0) {
+                  selectEggDirectly(pointedEgg.userData.id);
+                  dwellCooldownUntil = now + 1200;
+                  hoveredEggId = -1;
+                  dwellStartTime = 0;
+                  if (dwellSvg) dwellSvg.style.display = 'none';
+                  if (cursorLabel) cursorLabel.style.display = 'none';
+                }
+              } else {
+                if (hoveredEggId >= 0 && stage1Eggs[hoveredEggId] && !stage1Eggs[hoveredEggId].userData.isSelected && stage1Eggs[hoveredEggId].userData.basePos) {
+                  stage1Eggs[hoveredEggId].position.y = stage1Eggs[hoveredEggId].userData.basePos[1];
+                }
+                hoveredEggId = pointedEgg.userData.id;
+                dwellStartTime = now;
+                if (dwellSvg) dwellSvg.style.display = 'block';
+                if (dwellCircle) dwellCircle.style.strokeDashoffset = '150.8';
+                if (cursorLabel) {
+                  cursorLabel.style.display = 'block';
+                  cursorLabel.textContent = '👉 ชี้ค้างไว้ 1 วินาที';
+                }
+              }
+            } else {
+              if (hoveredEggId >= 0 && stage1Eggs[hoveredEggId] && !stage1Eggs[hoveredEggId].userData.isSelected && stage1Eggs[hoveredEggId].userData.basePos) {
+                stage1Eggs[hoveredEggId].position.y = stage1Eggs[hoveredEggId].userData.basePos[1];
+              }
+              hoveredEggId = -1;
+              dwellStartTime = 0;
+              if (dwellSvg) dwellSvg.style.display = 'none';
+            }
+          }
+
           if (currentlyPinching) {
             cursorEl.style.borderColor = '#22c55e';
             cursorEl.style.backgroundColor = 'rgba(34, 197, 94, 0.45)';
@@ -2820,7 +2921,7 @@
             cursorEl.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
             cursorEl.style.transform = 'translate(-50%, -50%) scale(1.0)';
             if (cursorDot) cursorDot.style.backgroundColor = '#10b981';
-            if (cursorLabel) {
+            if (cursorLabel && !isStage1) {
               if (isNearInteractable) {
                 cursorLabel.style.display = 'block';
                 cursorLabel.textContent = hoverText;
@@ -2851,6 +2952,13 @@
         isPinching = currentlyPinching;
       } else {
         if (cursorEl) cursorEl.style.display = 'none';
+        const dwellSvg = document.getElementById('dwell-svg');
+        if (dwellSvg) dwellSvg.style.display = 'none';
+        if (hoveredEggId >= 0 && stage1Eggs[hoveredEggId] && !stage1Eggs[hoveredEggId].userData.isSelected && stage1Eggs[hoveredEggId].userData.basePos) {
+          stage1Eggs[hoveredEggId].position.y = stage1Eggs[hoveredEggId].userData.basePos[1];
+        }
+        hoveredEggId = -1;
+        dwellStartTime = 0;
         if (isEggGrabbed || isIngredientGrabbed) releaseGrabbedEgg();
         isPinching = false;
         lastPinchState = false;
@@ -3151,6 +3259,25 @@
           const rect = renderer.domElement.getBoundingClientRect();
           const screenX = e.clientX - rect.left;
           const screenY = e.clientY - rect.top;
+
+          // Stage 1: Direct mouse/touch click on 3D egg
+          if (GAME_STATE.currentStage === 1 && camera && scene) {
+            const raycaster = new THREE.Raycaster();
+            const mouseNDC = new THREE.Vector2(
+              (screenX / window.innerWidth) * 2 - 1,
+              -(screenY / window.innerHeight) * 2 + 1
+            );
+            raycaster.setFromCamera(mouseNDC, camera);
+            const intersects = raycaster.intersectObjects(stage1Eggs, true);
+            if (intersects.length > 0) {
+              const hit = intersects[0].object;
+              if (hit.userData && typeof hit.userData.id !== 'undefined') {
+                selectEggDirectly(hit.userData.id);
+                return;
+              }
+            }
+          }
+
           if (tryGrabEgg(screenX, screenY)) {
             isPointerDragging = true;
             if (controls) controls.enabled = false;

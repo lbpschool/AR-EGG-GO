@@ -216,6 +216,76 @@
       color: var(--text-dark);
     }
 
+    /* Floating Stage Navigation Bar (Option B) */
+    .stage-nav-bar {
+      position: absolute;
+      bottom: 18px;
+      left: 0;
+      width: 100%;
+      padding: 0 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 25;
+      animation: slideUp 0.4s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(25px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .stage-nav-btn {
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 14px;
+      border: 1.5px solid rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: #1f2937;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .stage-nav-btn:hover {
+      background: rgba(255, 255, 255, 0.98);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .stage-nav-btn:active {
+      transform: scale(0.95);
+    }
+
+    .stage-nav-btn.next-btn {
+      background: rgba(16, 185, 129, 0.92);
+      color: #ffffff;
+      border-color: rgba(5, 150, 105, 0.6);
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.38);
+    }
+
+    .stage-nav-btn.next-btn:hover {
+      background: rgba(5, 150, 105, 0.98);
+      box-shadow: 0 6px 22px rgba(16, 185, 129, 0.5);
+    }
+
+    .stage-nav-btn:disabled, .stage-nav-btn.disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      pointer-events: none;
+      box-shadow: none;
+      transform: none;
+    }
+
     .progress-bar-container {
       width: 100%;
       height: 16px;
@@ -603,6 +673,16 @@
           สวัสดีจ้า! ยินดีต้อนรับสู่ภารกิจพิชิตไข่เค็มดินสอพอง เรามาเริ่มคัดเลือกไข่เป็ดคุณภาพดีกันเถอะ!
         </div>
       </div>
+    </div>
+
+    <!-- Floating Stage Navigation Bar (Option B) -->
+    <div id="stage-nav-bar" class="stage-nav-bar interactive" style="display: none;">
+      <button id="btn-prev-stage" class="stage-nav-btn prev-btn" title="ย้อนกลับไปด่านก่อนหน้า">
+        <span>⬅️</span> <span id="prev-stage-label">ด่านก่อนหน้า</span>
+      </button>
+      <button id="btn-next-stage" class="stage-nav-btn next-btn" title="ไปยังด่านถัดไป">
+        <span id="next-stage-label">ด่านถัดไป</span> <span>➔</span>
+      </button>
     </div>
 
   </div>
@@ -1716,7 +1796,89 @@
           `;
           break;
       }
+
+      const navBar = document.getElementById('stage-nav-bar');
+      if (navBar) navBar.style.display = 'flex';
+      updateStageNavButtons(stageNum);
     }
+
+    function updateStageNavButtons(stageNum) {
+      const prevBtn = document.getElementById('btn-prev-stage');
+      const nextBtn = document.getElementById('btn-next-stage');
+      if (!prevBtn || !nextBtn) return;
+
+      // 1. Previous button
+      if (stageNum <= 1) {
+        prevBtn.disabled = true;
+        prevBtn.classList.add('disabled');
+        prevBtn.innerHTML = `<span>⬅️</span> <span id="prev-stage-label">ด่านก่อนหน้า</span>`;
+      } else {
+        prevBtn.disabled = false;
+        prevBtn.classList.remove('disabled');
+        prevBtn.innerHTML = `<span>⬅️</span> <span id="prev-stage-label">ด่านที่ ${stageNum - 1}</span>`;
+      }
+
+      // 2. Next button
+      if (stageNum < 7) {
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('disabled');
+        const nextLabel = stageNum === 6 ? 'โบนัส (ด่าน 7)' : `ด่านที่ ${stageNum + 1}`;
+        nextBtn.innerHTML = `<span id="next-stage-label">${nextLabel}</span> <span>➔</span>`;
+      } else {
+        // Stage 7 (Bonus stage) -> Final summary button
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('disabled');
+        nextBtn.innerHTML = `<span id="next-stage-label">ดูสรุปผลคะแนน</span> <span>🏆</span>`;
+      }
+    }
+
+    function evaluateCurrentStageScoreOnSkip(stageNum) {
+      if (stageNum === 1) {
+        if (GAME_STATE.stage1.selectedEggs < 3) {
+          const ratio = GAME_STATE.stage1.selectedEggs / 3;
+          GAME_STATE.scores.stage1 = Math.max(0, Math.round(ratio * 10) - (GAME_STATE.stageMistakes.stage1 * 2));
+        }
+      } else if (stageNum === 2) {
+        if (!GAME_STATE.stage2.isDry || GAME_STATE.stage2.dryPercent < 100) {
+          const cleanScore = (GAME_STATE.stage2.cleanPercent / 100) * 5;
+          const dryScore = (GAME_STATE.stage2.dryPercent / 100) * 5;
+          GAME_STATE.scores.stage2 = Math.max(0, Math.round(cleanScore + dryScore) - (GAME_STATE.stageMistakes.stage2 * 2));
+        }
+      } else if (stageNum === 3) {
+        if (!GAME_STATE.stage3.kneadDone) {
+          const correctIngredients = Math.min(3, GAME_STATE.stage3.dinSorPhong) + Math.min(1, GAME_STATE.stage3.salt) + Math.min(1, GAME_STATE.stage3.water);
+          const recipePts = (correctIngredients / 5) * 15;
+          const kneadPts = (GAME_STATE.stage3.kneadPercent / 100) * 10;
+          GAME_STATE.scores.stage3 = Math.max(0, Math.round(recipePts + kneadPts) - (GAME_STATE.stageMistakes.stage3 * 3));
+        }
+      } else if (stageNum === 4) {
+        if (GAME_STATE.stage4.coveredPercent < 100) {
+          const pts = (GAME_STATE.stage4.coveredPercent / 100) * 20;
+          GAME_STATE.scores.stage4 = Math.max(0, Math.round(pts) - (GAME_STATE.stageMistakes.stage4 * 3));
+        }
+      } else if (stageNum === 5) {
+        if (GAME_STATE.stage5.huskPercent < 100) {
+          const pts = (GAME_STATE.stage5.huskPercent / 100) * 10;
+          GAME_STATE.scores.stage5 = Math.max(0, Math.round(pts) - (GAME_STATE.stageMistakes.stage5 * 2));
+        }
+      } else if (stageNum === 6) {
+        const s6Step2 = document.getElementById('s6-step2');
+        let pts = 0;
+        if (s6Step2 && s6Step2.style.display === 'block') {
+          pts = 5;
+        }
+        GAME_STATE.scores.stage6 = Math.max(0, pts - (GAME_STATE.stageMistakes.stage6 * 3));
+      } else if (stageNum === 7) {
+        const bonusQ2 = document.getElementById('bonus-q2');
+        let pts = 0;
+        if (bonusQ2 && bonusQ2.style.display === 'block') {
+          pts = 8;
+        }
+        GAME_STATE.scores.bonus = Math.max(0, pts - (GAME_STATE.stageMistakes.bonus * 3));
+      }
+      updateScoreDisplay();
+    }
+
     /* ==========================================================
        5. STAGE INTERACTIONS IMPLEMENTATION
        ========================================================== */
@@ -2081,6 +2243,9 @@
        6. SUMMARY & GOOGLE SHEET SYNC
        ========================================================== */
     function showGameSummary() {
+      const navBar = document.getElementById('stage-nav-bar');
+      if (navBar) navBar.style.display = 'none';
+
       GAME_STATE.endTime = Date.now();
       const totalSeconds = Math.round((GAME_STATE.endTime - GAME_STATE.startTime) / 1000);
       const minutes = Math.floor(totalSeconds / 60);
@@ -3331,6 +3496,35 @@
         setMascot(hintMsg, 'thinking');
         showToast('ขอคำใบ้ช่วยเหลือ');
       });
+
+      // Floating Stage Navigation (Option B)
+      const btnPrevStage = document.getElementById('btn-prev-stage');
+      const btnNextStage = document.getElementById('btn-next-stage');
+
+      if (btnPrevStage) {
+        btnPrevStage.addEventListener('click', () => {
+          if (GAME_STATE.currentStage > 1) {
+            sound.playTone(350, 'sine', 0.1, 0.2);
+            showToast(`⬅️ ย้อนกลับไปด่านที่ ${GAME_STATE.currentStage - 1}`, 1200);
+            setStage(GAME_STATE.currentStage - 1);
+          }
+        });
+      }
+
+      if (btnNextStage) {
+        btnNextStage.addEventListener('click', () => {
+          if (GAME_STATE.currentStage < 7) {
+            sound.playTone(450, 'sine', 0.1, 0.2);
+            evaluateCurrentStageScoreOnSkip(GAME_STATE.currentStage);
+            showToast(`ข้ามไปยังด่านที่ ${GAME_STATE.currentStage + 1} ➔`, 1200);
+            setStage(GAME_STATE.currentStage + 1);
+          } else if (GAME_STATE.currentStage === 7) {
+            sound.playTriumph();
+            evaluateCurrentStageScoreOnSkip(7);
+            showGameSummary();
+          }
+        });
+      }
 
       document.getElementById('btn-start-game').addEventListener('click', async () => {
         const nameInput = document.getElementById('input-student-name').value.trim();

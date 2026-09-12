@@ -1959,9 +1959,6 @@
         <button id="btn-print-pdf-summary" class="btn btn-outline" style="border-color: #0284c7; color: #0284c7; font-weight: 700; background: #f0f9ff; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
           📄 พิมพ์ / บันทึกรายงานคะแนน (PDF)
         </button>
-        <button id="btn-go-sorting" class="btn btn-accent btn-lg">
-          🧩 มินิเกมเรียงการ์ด 6 ขั้นตอน รับ Badge
-        </button>
         <div style="display: flex; gap: 8px;">
           <button id="btn-show-review" class="btn btn-outline" style="flex: 1;">
             📖 ทบทวนขั้นตอน
@@ -1974,37 +1971,7 @@
     </div>
   </div>
 
-  <!-- Fullscreen Modal 3: Card Sorting Challenge -->
-  <div id="modal-card-sorting" class="modal-backdrop" style="display: none;">
-    <div class="modal-box" style="max-width: 560px;">
-      <div style="font-size: 44px;">🧩🎴</div>
-      <h2 class="modal-title">ภารกิจจัดเรียง 7 ขั้นตอน</h2>
-      <p class="modal-desc">
-        แตะเลือกการ์ดขั้นตอนการทำไข่เค็มดินสอพอง เรียงตามลำดับจากขั้นที่ 1 ไปจนถึงขั้นที่ 7 ให้ถูกต้อง!
-      </p>
 
-      <div style="margin-bottom: 10px; font-weight: 600; font-size: 14px; color: #059669;">
-        ขั้นตอนที่กำลังจะเลือก: <span id="current-sort-step" class="badge-pill">ลำดับที่ 1</span>
-      </div>
-
-      <!-- Selected Sequence Display -->
-      <div id="sorted-sequence-list" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; text-align: left;">
-      </div>
-
-      <!-- Card Pool -->
-      <div class="cards-container" id="cards-pool">
-      </div>
-
-      <div style="display: flex; gap: 10px; margin-top: 14px;">
-        <button id="btn-reset-sorting" class="btn btn-outline" style="flex: 1;">
-          ↺ เริ่มเรียงใหม่
-        </button>
-        <button id="btn-verify-sorting" class="btn btn-primary" style="flex: 1;">
-          ✓ ตรวจคำตอบ
-        </button>
-      </div>
-    </div>
-  </div>
 
   <!-- Fullscreen Modal 4: Digital Badge Award -->
   <div id="modal-badge-award" class="modal-backdrop" style="display: none;">
@@ -2520,7 +2487,10 @@
       },
 
       playAudioOrTTS(filename, fallbackText = '', btnElement = null, onEndCallback = null) {
-        if (typeof sound !== 'undefined' && sound.isMuted) return;
+        if (typeof sound !== 'undefined' && sound.isMuted) {
+          if (typeof onEndCallback === 'function') setTimeout(onEndCallback, 0);
+          return;
+        }
         this.init();
         this.stop();
 
@@ -3277,31 +3247,72 @@
     let stageAdvanceTimer = null;
     let stageAdvanceInterval = null;
 
-    function autoAdvanceStage(targetStage, nextBtn = null, defaultText = 'ไปขั้นตอนต่อไป ➔') {
-      if (stageAdvanceTimer) clearTimeout(stageAdvanceTimer);
-      if (stageAdvanceInterval) clearInterval(stageAdvanceInterval);
+    function autoAdvanceStage(targetStage, nextBtn = null, defaultText = 'ไปขั้นตอนต่อไป ➔', voiceClipName = null, fallbackVoiceText = '') {
+      if (stageAdvanceTimer) { clearTimeout(stageAdvanceTimer); stageAdvanceTimer = null; }
+      if (stageAdvanceInterval) { clearInterval(stageAdvanceInterval); stageAdvanceInterval = null; }
 
-      let secLeft = 3;
-      const cleanText = defaultText.replace(/\s*➔/, '');
-      if (nextBtn) {
-        nextBtn.textContent = `${cleanText} (${secLeft}) ➔`;
-      }
-
-      stageAdvanceInterval = setInterval(() => {
-        secLeft--;
-        if (nextBtn && secLeft > 0) {
-          nextBtn.textContent = `${cleanText} (${secLeft}) ➔`;
-        }
-      }, 1000);
-
-      stageAdvanceTimer = setTimeout(() => {
-        if (stageAdvanceInterval) clearInterval(stageAdvanceInterval);
-        stageAdvanceInterval = null;
-        stageAdvanceTimer = null;
+      const cleanText = (defaultText || 'ไปขั้นตอนต่อไป').replace(/\s*➔/, '').trim();
+      let advanced = false;
+      const doAdvance = () => {
+        if (advanced) return;
+        advanced = true;
+        if (stageAdvanceTimer) { clearTimeout(stageAdvanceTimer); stageAdvanceTimer = null; }
+        if (stageAdvanceInterval) { clearInterval(stageAdvanceInterval); stageAdvanceInterval = null; }
         if (GAME_STATE.currentStage === targetStage - 1) {
           setStage(targetStage);
         }
-      }, 3000);
+      };
+
+      if (nextBtn) {
+        nextBtn.onclick = () => doAdvance();
+      }
+
+      const isMuted = typeof sound !== 'undefined' && sound.isMuted;
+      const hasVoice = Boolean(voiceClipName && typeof Narrator !== 'undefined' && !isMuted);
+
+      if (hasVoice) {
+        // Option 1: Play completion speech and wait for it to finish speaking completely!
+        if (nextBtn) {
+          nextBtn.textContent = `${cleanText} (กำลังบรรยาย...) 🔊`;
+        }
+
+        let speechDone = false;
+        Narrator.playClip(voiceClipName, fallbackVoiceText, () => {
+          speechDone = true;
+          if (nextBtn) {
+            nextBtn.textContent = `${cleanText} ➔`;
+          }
+          // Pause gracefully 500ms after speech completes before advancing
+          stageAdvanceTimer = setTimeout(() => {
+            doAdvance();
+          }, 500);
+        });
+
+        // Safety fallback: if speech audio gets blocked or takes over 8s, advance safely
+        stageAdvanceTimer = setTimeout(() => {
+          if (!speechDone) {
+            doAdvance();
+          }
+        }, 8500);
+
+      } else {
+        // Option 2: No speech audio (or sound is muted) -> advance automatically in 3 seconds!
+        let secLeft = 3;
+        if (nextBtn) {
+          nextBtn.textContent = `${cleanText} (${secLeft}) ➔`;
+        }
+
+        stageAdvanceInterval = setInterval(() => {
+          secLeft--;
+          if (nextBtn && secLeft > 0) {
+            nextBtn.textContent = `${cleanText} (${secLeft}) ➔`;
+          }
+        }, 1000);
+
+        stageAdvanceTimer = setTimeout(() => {
+          doAdvance();
+        }, 3000);
+      }
     }
 
     function setStage(stageNum) {
@@ -3823,11 +3834,11 @@
         if (counterEl) counterEl.textContent = 'คัดเลือกได้แล้ว: ' + GAME_STATE.stage1.selectedEggs + ' / 3 ฟอง';
 
         if (GAME_STATE.stage1.selectedEggs >= 3) {
-          setMascot('สุดยอดมาก! คัดไข่เป็ดคุณภาพเยี่ยมครบทั้ง 3 ฟองแล้ว (กำลังไปด่านต่อไปใน 3 วินาที)', 'celebrate');
-          if (typeof Narrator !== 'undefined') Narrator.playClip('cheer_s1_done.mp3.wav', 'สุดยอดมากค่ะ คัดเลือกไข่เป็ดคุณภาพเยี่ยมครบทั้ง 3 ฟองแล้ว!');
+          setMascot('สุดยอดมาก! คัดไข่เป็ดคุณภาพเยี่ยมครบทั้ง 3 ฟองแล้ว', 'celebrate');
           sound.playTriumph();
-          showToast('🎉 คัดไข่เป็ดครบ 3 ฟองแล้ว! กำลังไปด่านต่อไปใน 3 วินาที...', 3000);
-          autoAdvanceStage(2, null);
+          showToast('🎉 คัดไข่เป็ดครบ 3 ฟองแล้ว!', 3000);
+          const nextNavBtn = document.getElementById('btn-next-stage');
+          autoAdvanceStage(2, nextNavBtn, 'ไปขั้นตอนที่ 2 ➔', 'cheer_s1_done.mp3', 'สุดยอดมากค่ะ คัดเลือกไข่เป็ดคุณภาพเยี่ยมครบทั้ง 3 ฟองแล้ว!');
         }
       } else if (egg.userData.type === 'cracked') {
         sound.playWrong();
@@ -4131,8 +4142,7 @@
         if (typeof confetti === 'function') {
           confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
         }
-        showToast('🎉 ครบ 10 รอบแล้ว! ดินสอพองเหนียวเนียนเข้ากันสมบูรณ์แบบ (ไปด่านต่อไปใน 3 วินาที)', 3000);
-        if (typeof Narrator !== 'undefined') Narrator.playClip('cheer_s3_knead.mp3.wav', 'ยอดเยี่ยมมากค่ะ ดินสอพองเนียนเข้ากันดีแล้ว พร้อมนำไปพอกไข่แล้วค่ะ');
+        showToast('🎉 ครบ 10 รอบแล้ว! ดินสอพองเหนียวเนียนเข้ากันสมบูรณ์แบบ', 3000);
         setMascot('ยอดเยี่ยมมาก! ดินสอพองเหนียวเนียนเข้ากันดีแล้ว ดินสอพองพร้อมพอกแล้วจ้า!', 'celebrate');
         const nextBtn = document.getElementById('btn-s3-next');
         if (nextBtn) {
@@ -4145,7 +4155,7 @@
           bowlPlane.material.needsUpdate = true;
         }
 
-        autoAdvanceStage(4, nextBtn, 'นำไปพอกไข่ ➔');
+        autoAdvanceStage(4, nextBtn, 'นำไปพอกไข่ ➔', 'cheer_s3_knead.mp3', 'ยอดเยี่ยมมากค่ะ ดินสอพองเนียนเข้ากันดีแล้ว พร้อมนำไปพอกไข่แล้วค่ะ');
       }
     }
     function handleKnead(e) { handleKneadStroke(); }
@@ -4269,8 +4279,7 @@
       if (typeof confetti === 'function') {
         confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
       }
-      showToast('📦 บรรจุไข่เค็มลงภาชนะเรียบร้อยแล้ว! (ไปขั้นตอนต่อไปใน 3 วินาที)', 3000);
-      if (typeof Narrator !== 'undefined') Narrator.playClip('cheer_s6_packed.mp3.wav', 'บรรจุไข่ลงกล่องเรียบร้อย พร้อมสำหรับขั้นตอนการหมักแล้วค่ะ');
+      showToast('📦 บรรจุไข่เค็มลงภาชนะเรียบร้อยแล้ว!', 3000);
       setMascot('ยอดเยี่ยมมาก! บรรจุไข่เค็มลงกล่องเรียบร้อย พร้อมสำหรับขั้นตอนการหมักแล้วจ้า', 'celebrate');
 
       // 1. Hide the floating dragged egg immediately so no giant black blob appears!
@@ -4298,7 +4307,7 @@
         nextBtn.style.display = 'block';
       }
 
-      autoAdvanceStage(7, nextBtn, 'ไปขั้นตอนต่อไป ➔');
+      autoAdvanceStage(7, nextBtn, 'ไปขั้นตอนต่อไป ➔', 'cheer_s6_packed.mp3', 'บรรจุไข่ลงกล่องเรียบร้อย พร้อมสำหรับขั้นตอนการหมักแล้วค่ะ');
     }
 
     function finishStage6() {
@@ -6511,7 +6520,8 @@
         });
       }
 
-      document.getElementById('btn-go-sorting').addEventListener('click', initCardSorting);
+      const btnGoSorting = document.getElementById('btn-go-sorting');
+      if (btnGoSorting) btnGoSorting.addEventListener('click', initCardSorting);
 
       const openRecipeGuide = () => {
         renderRecipeGuideList();
@@ -6539,8 +6549,10 @@
         window.location.reload();
       });
 
-      document.getElementById('btn-reset-sorting').addEventListener('click', initCardSorting);
-      document.getElementById('btn-verify-sorting').addEventListener('click', verifySortedSequence);
+      const btnResetSorting = document.getElementById('btn-reset-sorting');
+      if (btnResetSorting) btnResetSorting.addEventListener('click', initCardSorting);
+      const btnVerifySorting = document.getElementById('btn-verify-sorting');
+      if (btnVerifySorting) btnVerifySorting.addEventListener('click', verifySortedSequence);
       document.getElementById('btn-badge-done').addEventListener('click', () => {
         document.getElementById('modal-badge-award').style.display = 'none';
         document.getElementById('modal-summary').style.display = 'flex';

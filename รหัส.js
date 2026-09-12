@@ -15,7 +15,12 @@ function doPost(e) {
   try {
     let data = {};
     if (e && e.postData && e.postData.contents) {
-      data = JSON.parse(e.postData.contents);
+      try {
+        data = JSON.parse(e.postData.contents);
+      } catch (pErr) {
+        // กรณีส่งมาเป็น Form-data หรือ Query string ภายใน contents
+        data = e.parameter || {};
+      }
     } else if (e && e.parameter) {
       data = e.parameter;
     }
@@ -29,23 +34,42 @@ function doPost(e) {
 }
 
 /**
- * ให้บริการ Web App
+ * ให้บริการ Web App และ API สำหรับ GET
  */
 function doGet(e) {
-  // ตรวจสอบและสร้างโครงสร้างชีตอัตโนมัติหากยังไม่มี
-  setupSpreadsheet();
-  
-  if (e && e.parameter && e.parameter.action === 'getTeacherData') {
-    const result = getTeacherDashboardData(e.parameter.pin);
-    return ContentService.createTextOutput(JSON.stringify(result))
+  try {
+    // ตรวจสอบและสร้างโครงสร้างชีตอัตโนมัติหากยังไม่มี
+    try { setupSpreadsheet(); } catch (sErr) { Logger.log('Setup sheet error: ' + sErr); }
+    
+    if (e && e.parameter) {
+      const action = e.parameter.action;
+      if (action === 'getTeacherData') {
+        const result = getTeacherDashboardData(e.parameter.pin);
+        return ContentService.createTextOutput(JSON.stringify(result))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      // Fallback: รองรับการบันทึกคะแนนผ่าน GET Query (ป้องกันปัญหา CORS เมื่อยิงจากภายนอก)
+      if (action === 'saveStudentScore') {
+        let payload = e.parameter;
+        if (e.parameter.data) {
+          try { payload = JSON.parse(e.parameter.data); } catch (jErr) {}
+        }
+        const result = saveStudentScore(payload);
+        return ContentService.createTextOutput(JSON.stringify(result))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    
+    const template = HtmlService.createTemplateFromFile('index');
+    return template.evaluate()
+      .setTitle('AR Salted Egg Challenge : ภารกิจพิชิตไข่เค็มดินสอพอง')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
   }
-  
-  const template = HtmlService.createTemplateFromFile('index');
-  return template.evaluate()
-    .setTitle('AR Salted Egg Challenge : ภารกิจพิชิตไข่เค็มดินสอพอง')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
 }
 
 /**
@@ -132,24 +156,30 @@ function saveStudentScore(data) {
     }
     
     const now = Utilities.formatDate(new Date(), 'Asia/Bangkok', 'yyyy-MM-dd HH:mm:ss');
+    const sanitize = (val) => {
+      if (val === undefined || val === null) return '-';
+      const str = String(val).trim();
+      return (/^[=+\-@]/.test(str)) ? "'" + str : str;
+    };
+
     const row = [
       now,
-      data.studentName || 'ไม่ระบุชื่อ',
-      data.studentNo || '-',
-      data.studentClass || '-',
+      sanitize(data.studentName || data.name || 'ไม่ระบุชื่อ'),
+      sanitize(data.studentNo || data.no || '-'),
+      sanitize(data.studentClass || data.class || '-'),
       Number(data.totalScore) || 0,
       Number(data.stars) || 0,
-      Number(data.stage1Score) || 0,
-      Number(data.stage2Score) || 0,
-      Number(data.stage3Score) || 0,
-      Number(data.stage4Score) || 0,
-      Number(data.stage5Score) || 0,
-      Number(data.stage6Score) || 0,
-      Number(data.bonusScore) || 0,
+      Number(data.stage1Score ?? data.s1) || 0,
+      Number(data.stage2Score ?? data.s2) || 0,
+      Number(data.stage3Score ?? data.s3) || 0,
+      Number(data.stage4Score ?? data.s4) || 0,
+      Number(data.stage5Score ?? data.s5) || 0,
+      Number(data.stage6Score ?? data.s6) || 0,
+      Number(data.bonusScore ?? data.bonus) || 0,
       Number(data.timeSpent) || 0,
-      Number(data.hintCount) || 0,
-      data.needsPractice || 'ไม่มี',
-      data.badge || 'Salted Egg Master'
+      Number(data.hintCount ?? data.hints) || 0,
+      sanitize(data.needsPractice || data.weak || 'ไม่มี'),
+      sanitize(data.badge || 'Salted Egg Master')
     ];
     
     sheet.appendRow(row);
@@ -230,10 +260,14 @@ function getTeacherDashboardData(pin) {
       }
       
       return {
+        id: 'sheet_row_' + (idx + 1),
         date: r[0],
         name: r[1],
+        studentName: r[1],
         no: r[2],
+        studentNo: r[2],
         class: r[3],
+        studentClass: r[3],
         totalScore: totalScore,
         stars: stars,
         s1: s1, s2: s2, s3: s3, s4: s4, s5: s5, s6: s6, bonus: bonus,

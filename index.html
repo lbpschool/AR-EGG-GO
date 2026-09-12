@@ -4122,8 +4122,29 @@
         GAME_STATE.stageMistakes.stage3++;
         if (GAME_STATE.scores.stage3 > 10) GAME_STATE.scores.stage3 -= 3;
         updateScoreDisplay();
-        showToast('⚠️ สัดส่วนเกินสูตร! สูตรที่ถูกต้องคือ ดินสอพอง 3 : เกลือ 1 : น้ำ 1 (กดปุ่ม "ตักใหม่")', 3000);
-        setMascot('ตักเกินสูตรแล้วจ้า! ลองกดปุ่ม "↺ ตักใหม่" แล้วเท ดินสอพอง 3, เกลือ 1, น้ำ 1 นะจ๊ะ', 'warning');
+
+        if (type === 'salt' && salt > 1) {
+          if (typeof Narrator !== 'undefined') {
+            Narrator.playClip('warn_salt_over.mp3.wav', 'ใส่เกลือป่นเกินสูตรแล้วนะคะ ถ้าใส่เกลือมากเกินไป จะทำให้ไข่เค็มเค็มจัดจนเสียรสชาติ และไข่แดงจะแข็งกระด้างค่ะ ให้กดปุ่มเริ่มทำการตักใหม่นะคะ');
+          }
+          showToast('⚠️ ใส่เกลือป่นเกินสูตร! กดปุ่ม "↺ เริ่มทำการตักใหม่"', 3500);
+          setMascot('ใส่เกลือป่นเกินสูตรแล้วจ้า! กดปุ่ม "↺ เริ่มทำการตักใหม่" แล้วเท ดินสอพอง 3, เกลือ 1, น้ำ 1 นะจ๊ะ', 'warning');
+        } else if (type === 'water' && water > 1) {
+          if (typeof Narrator !== 'undefined') {
+            Narrator.playClip('warn_water_over.mp3.wav', 'ใส่น้ำสะอาดเกินสูตรแล้วนะคะ ถ้าผสมน้ำมากเกินไป ดินสอพองจะเหลวเกินไปจนพอกไม่เกาะติดเปลือกไข่ค่ะ ให้กดปุ่มเริ่มทำการตักใหม่นะคะ');
+          }
+          showToast('⚠️ ใส่น้ำสะอาดเกินสูตร! กดปุ่ม "↺ เริ่มทำการตักใหม่"', 3500);
+          setMascot('ใส่น้ำสะอาดเกินสูตรแล้วจ้า! กดปุ่ม "↺ เริ่มทำการตักใหม่" แล้วเท ดินสอพอง 3, เกลือ 1, น้ำ 1 นะจ๊ะ', 'warning');
+        } else if (type === 'din' && din > 3) {
+          if (typeof Narrator !== 'undefined') {
+            Narrator.playClip('warn_clay_over.mp3.wav', 'ใส่ดินสอพองเกิน 3 ส่วนแล้วนะคะ ถ้าใส่ดินมากเกินไป เนื้อดินจะข้นแห้งจนพอกยาก และความเค็มจะไม่พอดีค่ะ ให้กดปุ่มเริ่มทำการตักใหม่นะคะ');
+          }
+          showToast('⚠️ ใส่ดินสอพองเกิน 3 ส่วน! กดปุ่ม "↺ เริ่มทำการตักใหม่"', 3500);
+          setMascot('ใส่ดินสอพองเกิน 3 ส่วนแล้วจ้า! กดปุ่ม "↺ เริ่มทำการตักใหม่" แล้วเท ดินสอพอง 3, เกลือ 1, น้ำ 1 นะจ๊ะ', 'warning');
+        } else {
+          showToast('⚠️ สัดส่วนเกินสูตร! สูตรที่ถูกต้องคือ ดินสอพอง 3 : เกลือ 1 : น้ำ 1 (กดปุ่ม "เริ่มทำการตักใหม่")', 3000);
+          setMascot('ตักเกินสูตรแล้วจ้า! ลองกดปุ่ม "↺ เริ่มทำการตักใหม่" แล้วเท ดินสอพอง 3, เกลือ 1, น้ำ 1 นะจ๊ะ', 'warning');
+        }
         return;
       }
 
@@ -4975,7 +4996,7 @@
           <!-- School Header -->
           <div style="text-align: center; border-bottom: 2px solid #0284c7; padding-bottom: 12px; margin-bottom: 14px;">
             <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 6px;">
-              <img src="assets/logo.jpg" alt="AR-EGG-GO" style="width: 58px; height: 58px; object-fit: contain; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);" onerror="this.src='logo.jpg'">
+              <img src="assets/school_logo.png" alt="โรงเรียนลพบุรีปัญญานุกูล" style="width: 68px; height: 60px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.12));" onerror="this.src='https://lbpschool.github.io/AR-EGG-GO/assets/school_logo.png'">
               <div style="text-align: center;">
                 <h2 style="margin: 0; font-size: 21px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">โรงเรียนลพบุรีปัญญานุกูล จังหวัดลพบุรี</h2>
                 <div style="font-size: 13px; color: #475569; font-weight: 600;">Lopburipanyanukul school</div>

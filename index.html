@@ -969,12 +969,12 @@
     }
 
     /* ==========================================================
-       STAGE 7 BONUS QUIZ : CENTERED GLASSMORPHISM & NEUMORPHIC
+       STAGE 7 BONUS QUIZ : SEPARATED QUESTION CARD & 3 STANDALONE ANSWER CARDS
        ========================================================== */
     .bonus-backdrop-overlay {
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.45) 0%, rgba(15, 23, 42, 0.72) 100%);
+      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.42) 0%, rgba(15, 23, 42, 0.68) 100%);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       z-index: 450;
@@ -986,36 +986,48 @@
       to { opacity: 1; }
     }
 
-    .action-card.bonus-quiz-modal {
+    /* Overall Screen Container for Stage 7: holds both top question card and bottom answer grid */
+    .action-card.bonus-quiz-stage {
       position: fixed !important;
-      top: 50% !important;
-      left: 50% !important;
-      transform: translate(-50%, -50%) !important;
-      width: 92% !important;
-      max-width: 680px !important;
-      max-height: 88vh;
-      overflow-y: auto;
-      background: rgba(255, 255, 255, 0.88) !important;
-      backdrop-filter: blur(28px) saturate(190%) !important;
-      -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
-      border: 2px solid rgba(255, 255, 255, 0.95) !important;
-      border-radius: 28px !important;
-      padding: 26px 28px !important;
-      box-shadow: 0 25px 60px -10px rgba(15, 23, 42, 0.38), 0 10px 25px rgba(0, 0, 0, 0.12), inset 0 2px 4px rgba(255, 255, 255, 0.95) !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      background: transparent !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      pointer-events: none !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 24px 20px !important;
+      gap: 20px !important;
       z-index: 500 !important;
-      pointer-events: auto !important;
-      animation: zoomInGlass 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
-      text-align: left;
+      overflow-y: auto !important;
     }
-    @keyframes zoomInGlass {
-      0% {
-        opacity: 0;
-        transform: translate(-50%, -46%) scale(0.92);
-      }
-      100% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-      }
+
+    /* Top Standalone Question Card */
+    .bonus-question-card {
+      width: 92%;
+      max-width: 860px;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border: 2px solid rgba(255, 255, 255, 0.95);
+      border-radius: 26px;
+      padding: 22px 28px;
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.28), inset 0 2px 4px rgba(255, 255, 255, 0.95);
+      pointer-events: auto;
+      text-align: left;
+      animation: slideDownGlass 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideDownGlass {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .bonus-quiz-header {
@@ -1023,7 +1035,7 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
-      padding-bottom: 12px;
+      padding-bottom: 10px;
       border-bottom: 1.5px solid rgba(226, 232, 240, 0.85);
     }
     .bonus-badge-title {
@@ -1057,12 +1069,12 @@
       border: 1px solid #fef08a;
       border-radius: 16px;
       padding: 10px 14px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .bonus-mascot-avatar {
       font-size: 24px;
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
       background: #fef08a;
       border: 2px solid #f59e0b;
@@ -1082,7 +1094,7 @@
     }
 
     .bonus-question-text {
-      font-size: 20px;
+      font-size: 21px;
       font-weight: 800;
       color: #0f172a;
       line-height: 1.4;
@@ -1091,251 +1103,228 @@
     .bonus-question-hint {
       font-size: 14px;
       color: #64748b;
-      margin-bottom: 16px;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
       gap: 6px;
     }
+    .bonus-point-guide {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #065f46;
+      background: rgba(209, 250, 229, 0.88);
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1px solid #a7f3d0;
+      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15);
+    }
 
-    /* Vibrant Glass + Neumorphic Choice Buttons */
-    .bonus-choice-list {
+    /* 3 Standalone Floating Answer Cards Grid (Option 1) */
+    .bonus-answers-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      width: 92%;
+      max-width: 880px;
+      animation: slideUpGlass 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideUpGlass {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .standalone-choice-card {
+      position: relative;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      margin-bottom: 6px;
-    }
-    .glass-choice-btn {
-      display: flex;
       align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      padding: 14px 18px;
-      border-radius: 18px;
+      text-align: center;
+      padding: 24px 18px 20px;
+      border-radius: 22px;
       cursor: pointer;
-      font-family: inherit;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: auto;
       border: 2px solid transparent;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
+      font-family: inherit;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
     }
-    .glass-choice-left {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      text-align: left;
-    }
-    .glass-choice-letter {
-      width: 38px;
-      height: 38px;
-      border-radius: 12px;
+
+    .standalone-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      font-size: 15px;
-      flex-shrink: 0;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s ease;
+      font-size: 18px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      transition: transform 0.25s ease;
     }
-    .glass-choice-content {
-      display: flex;
-      flex-direction: column;
-    }
-    .glass-choice-title {
-      font-size: 17px;
+    .standalone-title {
+      font-size: 21px;
       font-weight: 800;
       line-height: 1.3;
+      margin-bottom: 6px;
     }
-    .glass-choice-sub {
+    .standalone-desc {
       font-size: 13px;
       font-weight: 600;
+      line-height: 1.4;
       opacity: 0.88;
-      margin-top: 2px;
+      min-height: 38px;
+      margin-bottom: 14px;
     }
-    .glass-choice-icon {
-      font-size: 20px;
-      opacity: 0.7;
+    .standalone-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.6);
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.9);
       transition: all 0.2s ease;
     }
 
-    /* Theme 1: Cyan / Ocean (Question 1 Choice A) */
-    .glass-choice-btn.theme-cyan {
-      background: linear-gradient(135deg, rgba(240, 249, 255, 0.92) 0%, rgba(224, 242, 254, 0.88) 100%);
+    /* Pointing Hover Reaction (Triggered when index finger points or mouse hovers) */
+    .standalone-choice-card:hover,
+    .standalone-choice-card.is-pointing-target {
+      transform: translateY(-6px) scale(1.03) !important;
+    }
+    .standalone-choice-card:hover .standalone-badge,
+    .standalone-choice-card.is-pointing-target .standalone-badge {
+      transform: scale(1.12);
+    }
+    .standalone-choice-card:active {
+      transform: translateY(1px) scale(0.98) !important;
+    }
+
+    /* Specific Theme Colors */
+    .standalone-choice-card.theme-cyan {
+      background: linear-gradient(180deg, rgba(240, 249, 255, 0.92) 0%, rgba(224, 242, 254, 0.88) 100%);
       border-color: rgba(56, 189, 248, 0.7);
       color: #0369a1;
-      box-shadow: 0 8px 20px rgba(2, 132, 199, 0.14), inset 0 2px 2px rgba(255, 255, 255, 0.95), inset 0 -2px 4px rgba(2, 132, 199, 0.08);
+      box-shadow: 0 10px 24px rgba(2, 132, 199, 0.16), inset 0 2px 2px rgba(255, 255, 255, 0.95);
     }
-    .glass-choice-btn.theme-cyan .glass-choice-letter {
+    .standalone-choice-card.theme-cyan .standalone-badge {
       background: linear-gradient(135deg, #0284c7, #38bdf8);
       color: #ffffff;
-      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
     }
-    .glass-choice-btn.theme-cyan:hover {
-      transform: translateY(-3px) scale(1.012);
+    .standalone-choice-card.theme-cyan:hover,
+    .standalone-choice-card.theme-cyan.is-pointing-target {
       border-color: #0284c7;
-      box-shadow: 0 14px 28px rgba(2, 132, 199, 0.28), 0 0 16px rgba(56, 189, 248, 0.4), inset 0 2px 3px rgba(255, 255, 255, 1);
-    }
-    .glass-choice-btn.theme-cyan:hover .glass-choice-icon {
-      opacity: 1;
-      transform: translateX(4px) scale(1.15);
-    }
-    .glass-choice-btn.theme-cyan:active {
-      transform: translateY(1px) scale(0.985);
-      box-shadow: inset 0 4px 8px rgba(2, 132, 199, 0.25);
+      box-shadow: 0 16px 36px rgba(2, 132, 199, 0.32), 0 0 20px rgba(56, 189, 248, 0.5), inset 0 2px 4px rgba(255, 255, 255, 1);
     }
 
-    /* Theme 2: Amber / Sunset Gold (Question 1 Choice B) */
-    .glass-choice-btn.theme-amber {
-      background: linear-gradient(135deg, rgba(255, 251, 235, 0.92) 0%, rgba(254, 243, 199, 0.88) 100%);
+    .standalone-choice-card.theme-amber {
+      background: linear-gradient(180deg, rgba(255, 251, 235, 0.92) 0%, rgba(254, 243, 199, 0.88) 100%);
       border-color: rgba(245, 158, 11, 0.7);
       color: #b45309;
-      box-shadow: 0 8px 20px rgba(217, 119, 6, 0.14), inset 0 2px 2px rgba(255, 255, 255, 0.95), inset 0 -2px 4px rgba(217, 119, 6, 0.08);
+      box-shadow: 0 10px 24px rgba(217, 119, 6, 0.16), inset 0 2px 2px rgba(255, 255, 255, 0.95);
     }
-    .glass-choice-btn.theme-amber .glass-choice-letter {
+    .standalone-choice-card.theme-amber .standalone-badge {
       background: linear-gradient(135deg, #d97706, #fbbf24);
       color: #ffffff;
-      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
     }
-    .glass-choice-btn.theme-amber:hover {
-      transform: translateY(-3px) scale(1.012);
+    .standalone-choice-card.theme-amber:hover,
+    .standalone-choice-card.theme-amber.is-pointing-target {
       border-color: #d97706;
-      box-shadow: 0 14px 28px rgba(217, 119, 6, 0.28), 0 0 16px rgba(245, 158, 11, 0.4), inset 0 2px 3px rgba(255, 255, 255, 1);
-    }
-    .glass-choice-btn.theme-amber:hover .glass-choice-icon {
-      opacity: 1;
-      transform: translateX(4px) scale(1.15);
-    }
-    .glass-choice-btn.theme-amber:active {
-      transform: translateY(1px) scale(0.985);
-      box-shadow: inset 0 4px 8px rgba(217, 119, 6, 0.25);
+      box-shadow: 0 16px 36px rgba(217, 119, 6, 0.32), 0 0 20px rgba(245, 158, 11, 0.5), inset 0 2px 4px rgba(255, 255, 255, 1);
     }
 
-    /* Theme 3: Purple / Magenta Neon (Question 1 Choice C) */
-    .glass-choice-btn.theme-purple {
-      background: linear-gradient(135deg, rgba(250, 245, 255, 0.92) 0%, rgba(243, 232, 255, 0.88) 100%);
+    .standalone-choice-card.theme-purple {
+      background: linear-gradient(180deg, rgba(250, 245, 255, 0.92) 0%, rgba(243, 232, 255, 0.88) 100%);
       border-color: rgba(192, 38, 211, 0.7);
       color: #86198f;
-      box-shadow: 0 8px 20px rgba(168, 85, 247, 0.14), inset 0 2px 2px rgba(255, 255, 255, 0.95), inset 0 -2px 4px rgba(168, 85, 247, 0.08);
+      box-shadow: 0 10px 24px rgba(168, 85, 247, 0.16), inset 0 2px 2px rgba(255, 255, 255, 0.95);
     }
-    .glass-choice-btn.theme-purple .glass-choice-letter {
+    .standalone-choice-card.theme-purple .standalone-badge {
       background: linear-gradient(135deg, #9333ea, #c026d3);
       color: #ffffff;
-      box-shadow: 0 4px 12px rgba(168, 85, 247, 0.35);
     }
-    .glass-choice-btn.theme-purple:hover {
-      transform: translateY(-3px) scale(1.012);
+    .standalone-choice-card.theme-purple:hover,
+    .standalone-choice-card.theme-purple.is-pointing-target {
       border-color: #a21caf;
-      box-shadow: 0 14px 28px rgba(168, 85, 247, 0.28), 0 0 16px rgba(217, 70, 239, 0.4), inset 0 2px 3px rgba(255, 255, 255, 1);
-    }
-    .glass-choice-btn.theme-purple:hover .glass-choice-icon {
-      opacity: 1;
-      transform: translateX(4px) scale(1.15);
-    }
-    .glass-choice-btn.theme-purple:active {
-      transform: translateY(1px) scale(0.985);
-      box-shadow: inset 0 4px 8px rgba(168, 85, 247, 0.25);
+      box-shadow: 0 16px 36px rgba(168, 85, 247, 0.32), 0 0 20px rgba(217, 70, 239, 0.5), inset 0 2px 4px rgba(255, 255, 255, 1);
     }
 
-    /* Theme 4: Emerald / Mint (Question 2 Choice A) */
-    .glass-choice-btn.theme-emerald {
-      background: linear-gradient(135deg, rgba(236, 253, 245, 0.92) 0%, rgba(209, 250, 229, 0.88) 100%);
+    .standalone-choice-card.theme-emerald {
+      background: linear-gradient(180deg, rgba(236, 253, 245, 0.92) 0%, rgba(209, 250, 229, 0.88) 100%);
       border-color: rgba(16, 185, 129, 0.7);
       color: #065f46;
-      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.14), inset 0 2px 2px rgba(255, 255, 255, 0.95), inset 0 -2px 4px rgba(16, 185, 129, 0.08);
+      box-shadow: 0 10px 24px rgba(16, 185, 129, 0.16), inset 0 2px 2px rgba(255, 255, 255, 0.95);
     }
-    .glass-choice-btn.theme-emerald .glass-choice-letter {
+    .standalone-choice-card.theme-emerald .standalone-badge {
       background: linear-gradient(135deg, #059669, #10b981);
       color: #ffffff;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
     }
-    .glass-choice-btn.theme-emerald:hover {
-      transform: translateY(-3px) scale(1.012);
+    .standalone-choice-card.theme-emerald:hover,
+    .standalone-choice-card.theme-emerald.is-pointing-target {
       border-color: #059669;
-      box-shadow: 0 14px 28px rgba(16, 185, 129, 0.28), 0 0 16px rgba(52, 211, 153, 0.4), inset 0 2px 3px rgba(255, 255, 255, 1);
-    }
-    .glass-choice-btn.theme-emerald:hover .glass-choice-icon {
-      opacity: 1;
-      transform: translateX(4px) scale(1.15);
-    }
-    .glass-choice-btn.theme-emerald:active {
-      transform: translateY(1px) scale(0.985);
-      box-shadow: inset 0 4px 8px rgba(16, 185, 129, 0.25);
+      box-shadow: 0 16px 36px rgba(16, 185, 129, 0.32), 0 0 20px rgba(52, 211, 153, 0.5), inset 0 2px 4px rgba(255, 255, 255, 1);
     }
 
-    /* Theme 5: Coral / Rose Red (Question 2 Choice B) */
-    .glass-choice-btn.theme-coral {
-      background: linear-gradient(135deg, rgba(255, 241, 242, 0.92) 0%, rgba(254, 226, 226, 0.88) 100%);
+    .standalone-choice-card.theme-coral {
+      background: linear-gradient(180deg, rgba(255, 241, 242, 0.92) 0%, rgba(254, 226, 226, 0.88) 100%);
       border-color: rgba(244, 63, 94, 0.7);
       color: #9f1239;
-      box-shadow: 0 8px 20px rgba(244, 63, 94, 0.14), inset 0 2px 2px rgba(255, 255, 255, 0.95), inset 0 -2px 4px rgba(244, 63, 94, 0.08);
+      box-shadow: 0 10px 24px rgba(244, 63, 94, 0.16), inset 0 2px 2px rgba(255, 255, 255, 0.95);
     }
-    .glass-choice-btn.theme-coral .glass-choice-letter {
+    .standalone-choice-card.theme-coral .standalone-badge {
       background: linear-gradient(135deg, #e11d48, #fb7185);
       color: #ffffff;
-      box-shadow: 0 4px 12px rgba(244, 63, 94, 0.35);
     }
-    .glass-choice-btn.theme-coral:hover {
-      transform: translateY(-3px) scale(1.012);
+    .standalone-choice-card.theme-coral:hover,
+    .standalone-choice-card.theme-coral.is-pointing-target {
       border-color: #e11d48;
-      box-shadow: 0 14px 28px rgba(244, 63, 94, 0.28), 0 0 16px rgba(251, 113, 133, 0.4), inset 0 2px 3px rgba(255, 255, 255, 1);
-    }
-    .glass-choice-btn.theme-coral:hover .glass-choice-icon {
-      opacity: 1;
-      transform: translateX(4px) scale(1.15);
-    }
-    .glass-choice-btn.theme-coral:active {
-      transform: translateY(1px) scale(0.985);
-      box-shadow: inset 0 4px 8px rgba(244, 63, 94, 0.25);
+      box-shadow: 0 16px 36px rgba(244, 63, 94, 0.32), 0 0 20px rgba(251, 113, 133, 0.5), inset 0 2px 4px rgba(255, 255, 255, 1);
     }
 
-    /* Theme 6: Indigo / Royal Violet (Question 2 Choice C) */
-    .glass-choice-btn.theme-indigo {
-      background: linear-gradient(135deg, rgba(238, 242, 255, 0.92) 0%, rgba(224, 231, 255, 0.88) 100%);
+    .standalone-choice-card.theme-indigo {
+      background: linear-gradient(180deg, rgba(238, 242, 255, 0.92) 0%, rgba(224, 231, 255, 0.88) 100%);
       border-color: rgba(99, 102, 241, 0.7);
       color: #3730a3;
-      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.14), inset 0 2px 2px rgba(255, 255, 255, 0.95), inset 0 -2px 4px rgba(99, 102, 241, 0.08);
+      box-shadow: 0 10px 24px rgba(99, 102, 241, 0.16), inset 0 2px 2px rgba(255, 255, 255, 0.95);
     }
-    .glass-choice-btn.theme-indigo .glass-choice-letter {
+    .standalone-choice-card.theme-indigo .standalone-badge {
       background: linear-gradient(135deg, #4f46e5, #818cf8);
       color: #ffffff;
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
     }
-    .glass-choice-btn.theme-indigo:hover {
-      transform: translateY(-3px) scale(1.012);
+    .standalone-choice-card.theme-indigo:hover,
+    .standalone-choice-card.theme-indigo.is-pointing-target {
       border-color: #4f46e5;
-      box-shadow: 0 14px 28px rgba(99, 102, 241, 0.28), 0 0 16px rgba(129, 140, 248, 0.4), inset 0 2px 3px rgba(255, 255, 255, 1);
-    }
-    .glass-choice-btn.theme-indigo:hover .glass-choice-icon {
-      opacity: 1;
-      transform: translateX(4px) scale(1.15);
-    }
-    .glass-choice-btn.theme-indigo:active {
-      transform: translateY(1px) scale(0.985);
-      box-shadow: inset 0 4px 8px rgba(99, 102, 241, 0.25);
+      box-shadow: 0 16px 36px rgba(99, 102, 241, 0.32), 0 0 20px rgba(129, 140, 248, 0.5), inset 0 2px 4px rgba(255, 255, 255, 1);
     }
 
     /* Feedback Animations */
-    .glass-choice-btn.is-correct {
+    .standalone-choice-card.is-correct {
       background: linear-gradient(135deg, #22c55e, #16a34a) !important;
       border-color: #15803d !important;
       color: #ffffff !important;
-      box-shadow: 0 0 28px rgba(34, 197, 94, 0.75), inset 0 2px 4px rgba(255, 255, 255, 0.9) !important;
+      box-shadow: 0 0 32px rgba(34, 197, 94, 0.8), inset 0 2px 4px rgba(255, 255, 255, 0.9) !important;
       animation: pulseCorrect 0.5s ease-in-out !important;
     }
-    .glass-choice-btn.is-correct .glass-choice-letter {
+    .standalone-choice-card.is-correct .standalone-badge {
       background: #ffffff !important;
       color: #16a34a !important;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
     }
-    .glass-choice-btn.is-correct .glass-choice-sub {
-      color: rgba(255, 255, 255, 0.92) !important;
+    .standalone-choice-card.is-correct .standalone-desc {
+      color: rgba(255, 255, 255, 0.95) !important;
     }
-    .glass-choice-btn.is-wrong {
+    .standalone-choice-card.is-wrong {
       animation: shakeWrong 0.42s ease-in-out !important;
       border-color: #ef4444 !important;
-      box-shadow: 0 0 22px rgba(239, 68, 68, 0.6) !important;
+      box-shadow: 0 0 25px rgba(239, 68, 68, 0.65) !important;
     }
 
     @keyframes pulseCorrect {
@@ -1349,30 +1338,26 @@
       40%, 80% { transform: translateX(8px); }
     }
 
-    @media (max-width: 640px) {
-      .action-card.bonus-quiz-modal {
-        width: 95% !important;
-        padding: 18px 16px !important;
-        border-radius: 22px !important;
+    @media (max-width: 768px) {
+      .bonus-answers-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
       }
-      .bonus-question-text {
-        font-size: 17px;
+      .standalone-choice-card {
+        padding: 14px 16px;
+        flex-direction: row;
+        text-align: left;
+        gap: 14px;
       }
-      .glass-choice-btn {
-        padding: 10px 14px;
-        border-radius: 14px;
-      }
-      .glass-choice-title {
+      .standalone-badge {
+        margin-bottom: 0;
+        width: 38px;
+        height: 38px;
         font-size: 15px;
       }
-      .glass-choice-sub {
-        font-size: 12px;
-      }
-      .glass-choice-letter {
-        width: 32px;
-        height: 32px;
-        font-size: 13px;
-        border-radius: 10px;
+      .standalone-desc {
+        min-height: auto;
+        margin-bottom: 0;
       }
     }
 
@@ -2710,119 +2695,112 @@
 
         case 7:
           badgeText.textContent = 'Bonus Stage : ไข่เค็มกี่วันดี?';
-          setMascot('ยินดีด้วย! เข้าสู่ช่วงคำถามโบนัส มาดูกันว่าจำเวลาหมักได้แม่นแค่ไหน!', 'celebrate');
+          setMascot('ยินดีด้วย! เข้าสู่ช่วงคำถามโบนัส ใช้นิ้วชี้ชี้ค้างไว้ 1 วินาทีที่การ์ดคำตอบเพื่อเลือกคำตอบได้เลยนะจ๊ะ!', 'celebrate');
           camera.position.set(0, 2.5, 3.2);
 
-          actionCard.className = 'action-card bonus-quiz-modal';
+          actionCard.className = 'action-card bonus-quiz-stage';
           const currentBonusBackdrop = document.getElementById('bonus-backdrop-overlay');
           if (currentBonusBackdrop) currentBonusBackdrop.style.display = 'block';
 
           actionCard.innerHTML = `
-            <div class="bonus-quiz-header">
-              <div class="bonus-badge-title">
-                <span>🌟</span>
-                <span>โบนัสพิเศษ : ทดสอบความรู้</span>
-              </div>
-              <div class="bonus-step-indicator" id="bonus-step-badge">
-                คำถามข้อที่ 1 / 2
-              </div>
-            </div>
-
-            <div class="bonus-mascot-strip">
-              <div class="bonus-mascot-avatar">🥚</div>
-              <div class="bonus-mascot-msg" id="bonus-mascot-text">
-                ยินดีด้วยที่ผ่านครบทุกด่าน! มาทายกันว่าจำระยะเวลาการหมักไข่เค็มได้แม่นยำแค่ไหนนะจ๊ะ 🎉
-              </div>
-            </div>
-
-            <div id="bonus-q1" class="bonus-q-container">
-              <div class="bonus-question-text">
-                🍳 ข้อที่ 1: ถ้าต้องการนำไข่ไปทำ <u>"ไข่ดาวเค็ม"</u> ควรหมักกี่วัน?
-              </div>
-              <div class="bonus-question-hint">
-                <span>💡</span>
-                <span>เลือกระยะเวลาที่ไข่แดงเริ่มเยิ้มมันสวยงาม และไข่ขาวยังไม่เค็มเกินไป</span>
+            <!-- Top Standalone Question Card -->
+            <div class="bonus-question-card">
+              <div class="bonus-quiz-header">
+                <div class="bonus-badge-title">
+                  <span>🌟</span>
+                  <span>โบนัสพิเศษ : ทดสอบความรู้</span>
+                </div>
+                <div class="bonus-step-indicator" id="bonus-step-badge">
+                  คำถามข้อที่ 1 / 2
+                </div>
               </div>
 
-              <div class="bonus-choice-list">
-                <button type="button" class="glass-choice-btn theme-cyan" onclick="answerBonusQ1('1-3', this)">
-                  <div class="glass-choice-left">
-                    <div class="glass-choice-letter">A</div>
-                    <div class="glass-choice-content">
-                      <span class="glass-choice-title">1 – 3 วัน</span>
-                      <span class="glass-choice-sub">เกลือยังไม่ซึมเข้าเนื้อ รสชาติยังเหมือนไข่สดทั่วไป</span>
-                    </div>
-                  </div>
-                  <span class="glass-choice-icon">➔</span>
-                </button>
+              <div class="bonus-mascot-strip">
+                <div class="bonus-mascot-avatar">🥚</div>
+                <div class="bonus-mascot-msg" id="bonus-mascot-text">
+                  ยินดีด้วยที่ผ่านครบทุกด่าน! มาทายกันว่าจำระยะเวลาการหมักไข่เค็มได้แม่นยำแค่ไหนนะจ๊ะ 🎉
+                </div>
+              </div>
 
-                <button type="button" class="glass-choice-btn theme-amber" onclick="answerBonusQ1('7-10', this)">
-                  <div class="glass-choice-left">
-                    <div class="glass-choice-letter">B</div>
-                    <div class="glass-choice-content">
-                      <span class="glass-choice-title">7 – 10 วัน</span>
-                      <span class="glass-choice-sub">⭐ รสชาติกลมกล่อม ไข่แดงมันเยิ้มพอดี เหมาะทอดไข่ดาว</span>
-                    </div>
-                  </div>
-                  <span class="glass-choice-icon">➔</span>
-                </button>
-
-                <button type="button" class="glass-choice-btn theme-purple" onclick="answerBonusQ1('20-30', this)">
-                  <div class="glass-choice-left">
-                    <div class="glass-choice-letter">C</div>
-                    <div class="glass-choice-content">
-                      <span class="glass-choice-title">20 – 30 วัน</span>
-                      <span class="glass-choice-sub">หมักนานเกินไป เค็มจัดมากจนนำไปทอดไม่ได้</span>
-                    </div>
-                  </div>
-                  <span class="glass-choice-icon">➔</span>
-                </button>
+              <div class="bonus-q-title-wrap">
+                <div class="bonus-question-text" id="bonus-q-text">
+                  🍳 ข้อที่ 1: ถ้าต้องการนำไข่ไปทำ <u>"ไข่ดาวเค็ม"</u> ควรหมักกี่วัน?
+                </div>
+                <div class="bonus-question-hint" id="bonus-q-hint">
+                  <span>💡</span>
+                  <span>เลือกระยะเวลาที่ไข่แดงเริ่มเยิ้มมันสวยงาม และไข่ขาวยังไม่เค็มเกินไป</span>
+                </div>
+                <div class="bonus-point-guide">
+                  <span>👉 <b>ใช้นิ้วชี้ชี้ค้างไว้ 1 วินาที</b> ที่การ์ดคำตอบด้านล่าง (หรือคลิกเลือก)</span>
+                </div>
               </div>
             </div>
 
-            <div id="bonus-q2" class="bonus-q-container" style="display: none;">
-              <div class="bonus-question-text">
-                🥚 ข้อที่ 2: ถ้าต้องการนำไข่ไป <u>"ต้มเป็นไข่เค็มสุก"</u> ควรหมักกี่วัน?
-              </div>
-              <div class="bonus-question-hint">
-                <span>💡</span>
-                <span>เลือกระยะเวลาที่ความเค็มแทรกซึมทั่วทั้งฟอง ไข่แดงแข็งเป็นยางมะตูมมันวาว</span>
-              </div>
+            <!-- Standalone Answer Cards Grid (Option 1: 3 Columns Side-by-Side) -->
+            <!-- Question 1 Choices -->
+            <div class="bonus-answers-grid" id="bonus-q1-answers">
+              <button type="button" class="standalone-choice-card theme-cyan" id="choice-q1-a" data-ans="1-3" onclick="answerBonusQ1('1-3', this)">
+                <div class="standalone-badge">A</div>
+                <div class="standalone-title">1 – 3 วัน</div>
+                <div class="standalone-desc">เกลือยังไม่ซึมเข้าเนื้อ รสชาติยังเหมือนไข่สดทั่วไป</div>
+                <div class="standalone-action">
+                  <span class="action-point-icon">👉</span>
+                  <span class="action-text">ชี้ค้าง 1 วิ</span>
+                </div>
+              </button>
 
-              <div class="bonus-choice-list">
-                <button type="button" class="glass-choice-btn theme-emerald" onclick="answerBonusQ2('3-5', this)">
-                  <div class="glass-choice-left">
-                    <div class="glass-choice-letter">A</div>
-                    <div class="glass-choice-content">
-                      <span class="glass-choice-title">3 – 5 วัน</span>
-                      <span class="glass-choice-sub">เวลายังน้อยเกินไป ไข่แดงยังไม่จับตัวเป็นก้อน</span>
-                    </div>
-                  </div>
-                  <span class="glass-choice-icon">➔</span>
-                </button>
+              <button type="button" class="standalone-choice-card theme-amber" id="choice-q1-b" data-ans="7-10" onclick="answerBonusQ1('7-10', this)">
+                <div class="standalone-badge">B</div>
+                <div class="standalone-title">7 – 10 วัน</div>
+                <div class="standalone-desc">⭐ รสกลมกล่อม ไข่แดงมันเยิ้มพอดี เหมาะทอดไข่ดาว</div>
+                <div class="standalone-action">
+                  <span class="action-point-icon">👉</span>
+                  <span class="action-text">ชี้ค้าง 1 วิ</span>
+                </div>
+              </button>
 
-                <button type="button" class="glass-choice-btn theme-coral" onclick="answerBonusQ2('10-14', this)">
-                  <div class="glass-choice-left">
-                    <div class="glass-choice-letter">B</div>
-                    <div class="glass-choice-content">
-                      <span class="glass-choice-title">10 – 14 วัน</span>
-                      <span class="glass-choice-sub">⭐ จุดที่อร่อยที่สุด! ไข่ขาวเค็มพอดี ไข่แดงเป็นทรายมันเยิ้ม</span>
-                    </div>
-                  </div>
-                  <span class="glass-choice-icon">➔</span>
-                </button>
+              <button type="button" class="standalone-choice-card theme-purple" id="choice-q1-c" data-ans="20-30" onclick="answerBonusQ1('20-30', this)">
+                <div class="standalone-badge">C</div>
+                <div class="standalone-title">20 – 30 วัน</div>
+                <div class="standalone-desc">หมักนานเกินไป เค็มจัดมากจนนำไปทอดไม่ได้</div>
+                <div class="standalone-action">
+                  <span class="action-point-icon">👉</span>
+                  <span class="action-text">ชี้ค้าง 1 วิ</span>
+                </div>
+              </button>
+            </div>
 
-                <button type="button" class="glass-choice-btn theme-indigo" onclick="answerBonusQ2('30', this)">
-                  <div class="glass-choice-left">
-                    <div class="glass-choice-letter">C</div>
-                    <div class="glass-choice-content">
-                      <span class="glass-choice-title">30 วัน</span>
-                      <span class="glass-choice-sub">ความเค็มสูงเกินไป เหมาะสำหรับดองเค็มจัดเท่านั้น</span>
-                    </div>
-                  </div>
-                  <span class="glass-choice-icon">➔</span>
-                </button>
-              </div>
+            <!-- Question 2 Choices -->
+            <div class="bonus-answers-grid" id="bonus-q2-answers" style="display: none;">
+              <button type="button" class="standalone-choice-card theme-emerald" id="choice-q2-a" data-ans="3-5" onclick="answerBonusQ2('3-5', this)">
+                <div class="standalone-badge">A</div>
+                <div class="standalone-title">3 – 5 วัน</div>
+                <div class="standalone-desc">เวลายังน้อยเกินไป ไข่แดงยังไม่จับตัวเป็นก้อน</div>
+                <div class="standalone-action">
+                  <span class="action-point-icon">👉</span>
+                  <span class="action-text">ชี้ค้าง 1 วิ</span>
+                </div>
+              </button>
+
+              <button type="button" class="standalone-choice-card theme-coral" id="choice-q2-b" data-ans="10-14" onclick="answerBonusQ2('10-14', this)">
+                <div class="standalone-badge">B</div>
+                <div class="standalone-title">10 – 14 วัน</div>
+                <div class="standalone-desc">⭐ จุดอร่อยที่สุด! ไข่ขาวเค็มพอดี ไข่แดงเป็นทรายมันเยิ้ม</div>
+                <div class="standalone-action">
+                  <span class="action-point-icon">👉</span>
+                  <span class="action-text">ชี้ค้าง 1 วิ</span>
+                </div>
+              </button>
+
+              <button type="button" class="standalone-choice-card theme-indigo" id="choice-q2-c" data-ans="30" onclick="answerBonusQ2('30', this)">
+                <div class="standalone-badge">C</div>
+                <div class="standalone-title">30 วัน</div>
+                <div class="standalone-desc">ความเค็มสูงเกินไป เหมาะสำหรับดองเค็มจัดเท่านั้น</div>
+                <div class="standalone-action">
+                  <span class="action-point-icon">👉</span>
+                  <span class="action-text">ชี้ค้าง 1 วิ</span>
+                </div>
+              </button>
             </div>
           `;
           break;
@@ -2900,9 +2878,9 @@
         }
         GAME_STATE.scores.stage6 = Math.max(0, pts - (GAME_STATE.stageMistakes.stage6 * 3));
       } else if (stageNum === 7) {
-        const bonusQ2 = document.getElementById('bonus-q2');
+        const bonusQ2 = document.getElementById('bonus-q2') || document.getElementById('bonus-q2-answers');
         let pts = 0;
-        if (bonusQ2 && bonusQ2.style.display === 'block') {
+        if (bonusQ2 && (bonusQ2.style.display === 'block' || bonusQ2.style.display === 'grid')) {
           pts = 8;
         }
         GAME_STATE.scores.bonus = Math.max(0, pts - (GAME_STATE.stageMistakes.bonus * 3));
@@ -3416,23 +3394,29 @@
         setMascot('เก่งมาก! ไข่ดาวเค็มไข่แดงจะกำลังมันเยิ้มพอดี แล้วถ้าจะนำไปต้มล่ะ?', 'happy');
 
         setTimeout(() => {
-          const q1 = document.getElementById('bonus-q1');
-          const q2 = document.getElementById('bonus-q2');
+          const q1Answers = document.getElementById('bonus-q1-answers');
+          const q2Answers = document.getElementById('bonus-q2-answers');
           const badge = document.getElementById('bonus-step-badge');
-          if (q1 && q2) {
-            q1.style.opacity = '0';
-            q1.style.transform = 'translateY(-10px)';
-            q1.style.transition = 'all 0.25s ease';
+          const qTitle = document.getElementById('bonus-q-text');
+          const qHint = document.getElementById('bonus-q-hint');
+
+          if (q1Answers && q2Answers) {
+            q1Answers.style.opacity = '0';
+            q1Answers.style.transform = 'translateY(-14px)';
+            q1Answers.style.transition = 'all 0.25s ease';
             setTimeout(() => {
-              q1.style.display = 'none';
-              q2.style.display = 'block';
-              q2.style.opacity = '0';
-              q2.style.transform = 'translateY(10px)';
+              q1Answers.style.display = 'none';
+              if (qTitle) qTitle.innerHTML = '🥚 ข้อที่ 2: ถ้าต้องการนำไข่ไป <u>"ต้มเป็นไข่เค็มสุก"</u> ควรหมักกี่วัน?';
+              if (qHint) qHint.innerHTML = '<span>💡</span><span>เลือกระยะเวลาที่ความเค็มแทรกซึมทั่วทั้งฟอง ไข่แดงแข็งเป็นยางมะตูมมันวาว</span>';
               if (badge) badge.textContent = 'คำถามข้อที่ 2 / 2';
+
+              q2Answers.style.display = 'grid';
+              q2Answers.style.opacity = '0';
+              q2Answers.style.transform = 'translateY(14px)';
               setTimeout(() => {
-                q2.style.opacity = '1';
-                q2.style.transform = 'translateY(0)';
-                q2.style.transition = 'all 0.3s ease';
+                q2Answers.style.opacity = '1';
+                q2Answers.style.transform = 'translateY(0)';
+                q2Answers.style.transition = 'all 0.3s ease';
               }, 30);
             }, 250);
           }
@@ -4330,8 +4314,10 @@
         const indexY = index.y * canvas.height;
 
         const isStage1 = (GAME_STATE.currentStage === 1);
-        const cursorX = isStage1 ? indexX : (thumbX + indexX) / 2;
-        const cursorY = isStage1 ? indexY : (thumbY + indexY) / 2;
+        const isStage7 = (GAME_STATE.currentStage === 7);
+        const isPointDwellStage = isStage1 || isStage7;
+        const cursorX = isPointDwellStage ? indexX : (thumbX + indexX) / 2;
+        const cursorY = isPointDwellStage ? indexY : (thumbY + indexY) / 2;
 
         // Calculate pinch distance
         const dx = thumb.x - index.x;
@@ -4356,7 +4342,7 @@
           cursorEl.style.top = cursorY + 'px';
 
           let isNearInteractable = false;
-          let hoverText = isStage1 ? '👉 ชี้ค้างไว้' : '🤏 จีบจับ';
+          let hoverText = isPointDwellStage ? '👉 ชี้ค้างไว้' : '🤏 จีบจับ';
 
           if (eggMesh && eggMesh.visible && (GAME_STATE.currentStage === 2 || GAME_STATE.currentStage === 4 || GAME_STATE.currentStage === 5 || GAME_STATE.currentStage === 6)) {
             const eggScreen = getObjectScreenPos(eggMesh);
@@ -4501,6 +4487,69 @@
             }
           }
 
+          // Stage 7: Point & Dwell Hover Selection on 3 Standalone Answer Cards
+          if (isStage7) {
+            const now = Date.now();
+            const dwellSvg = document.getElementById('dwell-svg');
+            const dwellCircle = document.getElementById('dwell-progress-circle');
+
+            const targetEl = document.elementFromPoint(indexX, indexY);
+            const choiceCard = targetEl ? targetEl.closest('.standalone-choice-card') : null;
+
+            if (choiceCard && !choiceCard.disabled && now > dwellCooldownUntil) {
+              isNearInteractable = true;
+              const cardId = choiceCard.id || choiceCard.getAttribute('data-ans');
+
+              // Highlight hovered card
+              document.querySelectorAll('.standalone-choice-card').forEach(c => {
+                if (c === choiceCard) c.classList.add('is-pointing-target');
+                else c.classList.remove('is-pointing-target');
+              });
+
+              if (hoveredEggId === cardId) {
+                const elapsed = now - dwellStartTime;
+                const progress = Math.min(1, elapsed / DWELL_TARGET_MS);
+                if (dwellSvg) dwellSvg.style.display = 'block';
+                if (dwellCircle) {
+                  const offset = 150.8 * (1 - progress);
+                  dwellCircle.style.strokeDashoffset = offset;
+                }
+                if (cursorLabel) {
+                  cursorLabel.style.display = 'block';
+                  cursorLabel.textContent = `👉 กำลังเลือก... ${Math.round(progress * 100)}%`;
+                }
+                if (cursorDot) cursorDot.style.backgroundColor = '#22c55e';
+                cursorEl.style.borderColor = '#22c55e';
+
+                if (progress >= 1.0) {
+                  choiceCard.click();
+                  dwellCooldownUntil = now + 1400;
+                  hoveredEggId = -1;
+                  dwellStartTime = 0;
+                  if (dwellSvg) dwellSvg.style.display = 'none';
+                  if (cursorLabel) cursorLabel.style.display = 'none';
+                  document.querySelectorAll('.standalone-choice-card').forEach(c => c.classList.remove('is-pointing-target'));
+                }
+              } else {
+                hoveredEggId = cardId;
+                dwellStartTime = now;
+                if (dwellSvg) dwellSvg.style.display = 'block';
+                if (dwellCircle) dwellCircle.style.strokeDashoffset = '150.8';
+                if (cursorLabel) {
+                  cursorLabel.style.display = 'block';
+                  cursorLabel.textContent = '👉 ชี้ค้างไว้ 1 วินาที เพื่อเลือก';
+                }
+              }
+            } else {
+              if (hoveredEggId !== -1 && isStage7) {
+                document.querySelectorAll('.standalone-choice-card').forEach(c => c.classList.remove('is-pointing-target'));
+                hoveredEggId = -1;
+                dwellStartTime = 0;
+                if (dwellSvg) dwellSvg.style.display = 'none';
+              }
+            }
+          }
+
           if (currentlyPinching) {
             cursorEl.style.borderColor = '#22c55e';
             cursorEl.style.backgroundColor = 'rgba(34, 197, 94, 0.45)';
@@ -4510,6 +4559,8 @@
               cursorLabel.style.display = 'block';
               if (isStage1) {
                 cursorLabel.textContent = '👉 เลือกไข่';
+              } else if (isStage7) {
+                cursorLabel.textContent = '👉 ชี้เลือกคำตอบ';
               } else if (isIngredientGrabbed && grabbedIngredient) {
                 cursorLabel.textContent = '🥣 เท ' + grabbedIngredient.userData.name;
               } else if (isEggGrabbed) {
@@ -4523,7 +4574,7 @@
             cursorEl.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
             cursorEl.style.transform = 'translate(-50%, -50%) scale(1.0)';
             if (cursorDot) cursorDot.style.backgroundColor = '#10b981';
-            if (cursorLabel && !isStage1) {
+            if (cursorLabel && !isPointDwellStage) {
               if (isNearInteractable) {
                 cursorLabel.style.display = 'block';
                 cursorLabel.textContent = hoverText;

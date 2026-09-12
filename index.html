@@ -1956,7 +1956,39 @@
       document.getElementById('score-display').textContent = total + ' / 100';
     }
 
+    let stageAdvanceTimer = null;
+    let stageAdvanceInterval = null;
+
+    function autoAdvanceStage(targetStage, nextBtn = null, defaultText = 'ไปขั้นตอนต่อไป ➔') {
+      if (stageAdvanceTimer) clearTimeout(stageAdvanceTimer);
+      if (stageAdvanceInterval) clearInterval(stageAdvanceInterval);
+
+      let secLeft = 3;
+      const cleanText = defaultText.replace(/\s*➔/, '');
+      if (nextBtn) {
+        nextBtn.textContent = `${cleanText} (${secLeft}) ➔`;
+      }
+
+      stageAdvanceInterval = setInterval(() => {
+        secLeft--;
+        if (nextBtn && secLeft > 0) {
+          nextBtn.textContent = `${cleanText} (${secLeft}) ➔`;
+        }
+      }, 1000);
+
+      stageAdvanceTimer = setTimeout(() => {
+        if (stageAdvanceInterval) clearInterval(stageAdvanceInterval);
+        stageAdvanceInterval = null;
+        stageAdvanceTimer = null;
+        if (GAME_STATE.currentStage === targetStage - 1) {
+          setStage(targetStage);
+        }
+      }, 3000);
+    }
+
     function setStage(stageNum) {
+      if (stageAdvanceTimer) { clearTimeout(stageAdvanceTimer); stageAdvanceTimer = null; }
+      if (stageAdvanceInterval) { clearInterval(stageAdvanceInterval); stageAdvanceInterval = null; }
       GAME_STATE.currentStage = stageNum;
       isEggGrabbed = false;
       isPointerDragging = false;
@@ -2396,9 +2428,10 @@
         if (counterEl) counterEl.textContent = 'คัดเลือกได้แล้ว: ' + GAME_STATE.stage1.selectedEggs + ' / 3 ฟอง';
 
         if (GAME_STATE.stage1.selectedEggs >= 3) {
-          setMascot('สุดยอดมาก! คัดไข่เป็ดคุณภาพเยี่ยมครบทั้ง 3 ฟองแล้ว', 'celebrate');
+          setMascot('สุดยอดมาก! คัดไข่เป็ดคุณภาพเยี่ยมครบทั้ง 3 ฟองแล้ว (กำลังไปด่านต่อไปใน 3 วินาที)', 'celebrate');
           sound.playTriumph();
-          setTimeout(() => setStage(2), 1500);
+          showToast('🎉 คัดไข่เป็ดครบ 3 ฟองแล้ว! กำลังไปด่านต่อไปใน 3 วินาที...', 3000);
+          autoAdvanceStage(2, null);
         }
       } else if (egg.userData.type === 'cracked') {
         sound.playWrong();
@@ -2463,13 +2496,13 @@
         GAME_STATE.stage2.isDry = true;
         if (eggMesh) eggMesh.material.roughness = 0.45; // matte clean shell
         sound.playTriumph();
-        showToast('✨ ไข่สะอาดและแห้งสนิท 100% แล้ว! กำลังไปยังด่านต่อไป...', 2500);
+        showToast('✨ ไข่สะอาดและแห้งสนิท 100% แล้ว! กำลังไปยังด่านต่อไปใน 3 วินาที...', 3000);
         setMascot('ยอดเยี่ยมมาก! ไข่สะอาดและแห้งสนิท 100% แล้ว พร้อมไปผสมสูตรลับ 3:1:1 ในด่านที่ 3 ได้เลย!', 'celebrate');
         const nextNavBtn = document.getElementById('btn-next-stage');
         if (nextNavBtn) {
           nextNavBtn.style.boxShadow = '0 0 24px rgba(16, 185, 129, 0.9)';
         }
-        setTimeout(() => setStage(3), 1600);
+        autoAdvanceStage(3, nextNavBtn, 'ไปขั้นตอนต่อไป ➔');
       }
     }
 
@@ -2691,12 +2724,11 @@
         if (typeof confetti === 'function') {
           confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
         }
-        showToast('🎉 ครบ 10 รอบแล้ว! ดินสอพองเหนียวเนียนเข้ากันสมบูรณ์แบบ', 3000);
-        setMascot('ยอดเยี่ยมมาก! ดินสอพองเหนียวเนียนเข้ากันดีแล้ว กด "นำไปพอกไข่" เพื่อไปด่านที่ 4 ได้เลยจ้า', 'celebrate');
+        showToast('🎉 ครบ 10 รอบแล้ว! ดินสอพองเหนียวเนียนเข้ากันสมบูรณ์แบบ (ไปด่านต่อไปใน 3 วินาที)', 3000);
+        setMascot('ยอดเยี่ยมมาก! ดินสอพองเหนียวเนียนเข้ากันดีแล้ว ดินสอพองพร้อมพอกแล้วจ้า!', 'celebrate');
         const nextBtn = document.getElementById('btn-s3-next');
         if (nextBtn) {
           nextBtn.disabled = false;
-          nextBtn.textContent = 'นำไปพอกไข่ ➔';
           nextBtn.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.9)';
         }
 
@@ -2704,6 +2736,8 @@
           bowlPlane.material.map = realTextures['basin_paste'];
           bowlPlane.material.needsUpdate = true;
         }
+
+        autoAdvanceStage(4, nextBtn, 'นำไปพอกไข่ ➔');
       }
     }
     function handleKnead(e) { handleKneadStroke(); }
@@ -2738,13 +2772,14 @@
         GAME_STATE.stage4.done = true;
         sound.playTriumph();
         confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
-        showToast('🌟 พอกไข่ครบ 5 ครั้ง (100%) เรียบเนียนสม่ำเสมอ!');
-        setMascot('พอกได้หนาและสม่ำเสมอทั่วทั้งฟอง เยี่ยมยอดที่สุด! กดปุ่มเพื่อไปต่อได้เลยจ้า', 'celebrate');
+        showToast('🌟 พอกไข่ครบ 5 ครั้ง (100%) เรียบเนียนสม่ำเสมอ! (ไปด่านต่อไปใน 3 วินาที)', 3000);
+        setMascot('พอกได้หนาและสม่ำเสมอทั่วทั้งฟอง เยี่ยมยอดที่สุด! กำลังไปด่านต่อไป...', 'celebrate');
         const nextBtn = document.getElementById('btn-s4-next');
         if (nextBtn) {
           nextBtn.disabled = false;
           nextBtn.style.display = 'block';
         }
+        autoAdvanceStage(5, nextBtn, 'ไปขั้นตอนต่อไป ➔');
       }
     }
 
@@ -2796,13 +2831,14 @@
         GAME_STATE.stage5.done = true;
         sound.playTriumph();
         confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
-        showToast('🌾 แกลบดำเคลือบติดทั่วไข่ครบ 100%!');
+        showToast('🌾 แกลบดำเคลือบติดทั่วไข่ครบ 100%! (ไปด่านต่อไปใน 3 วินาที)', 3000);
         setMascot('รู้ไหมเอ่ย? แกลบดำช่วยไม่ให้ไข่ติดกัน และช่วยรักษาความชื้นของดินสอพองที่พอกไว้จ้า', 'celebrate');
         const nextBtn = document.getElementById('btn-s5-next');
         if (nextBtn) {
           nextBtn.disabled = false;
           nextBtn.style.display = 'block';
         }
+        autoAdvanceStage(6, nextBtn, 'ไปขั้นตอนต่อไป ➔');
       }
     }
 
@@ -2822,9 +2858,9 @@
     function answerStage6Location(choice) {
       if (choice === 3) {
         sound.playCorrect();
-        showToast('✔️ ถูกต้อง! บริเวณแห้งและอากาศถ่ายเท โดยไม่ต้องแช่ตู้เย็น');
+        showToast('✔️ ถูกต้อง! บริเวณแห้งและอากาศถ่ายเท โดยไม่ต้องแช่ตู้เย็น (สรุปผลใน 3 วินาที)', 3000);
         setMascot('ถูกต้องที่สุด! วางไว้ในที่แห้ง อากาศถ่ายเท และไม่ต้องแช่ตู้เย็น จะทำให้เกลือค่อยๆ ซึมได้อย่างสม่ำเสมอจ้า', 'celebrate');
-        setTimeout(() => setStage(7), 1800);
+        autoAdvanceStage(7, null);
       } else {
         sound.playWrong();
         GAME_STATE.stageMistakes.stage6++;

@@ -3776,8 +3776,9 @@
     let lastCoatTime = 0;
     const vfxParticles = [];
 
-    // Stage 1 Index Finger Point & Dwell Selection State
+    // AR Interaction States (Stage 1 True Pinch & Stage 7 Quiz Point & Dwell)
     let hoveredEggId = -1;
+    let hoveredChoiceCardId = null;
     let dwellStartTime = 0;
     const DWELL_TARGET_MS = 1000;
     let dwellCooldownUntil = 0;
@@ -3906,10 +3907,10 @@
     function tryGrabEgg(screenX, screenY) {
       const stage = GAME_STATE.currentStage;
 
-      // Stage 1: Direct selection on pinch or click (Point & Dwell or Instant Pinch Select)
+      // Stage 1: Direct selection ONLY on intentional pinch or click
       if (stage === 1) {
         let candidate = null;
-        let minDist = 130;
+        let minDist = 85;
         const raycaster = new THREE.Raycaster();
         const mouseNDC = new THREE.Vector2(
           (screenX / window.innerWidth) * 2 - 1,
@@ -4315,18 +4316,21 @@
 
         const isStage1 = (GAME_STATE.currentStage === 1);
         const isStage7 = (GAME_STATE.currentStage === 7);
-        const isPointDwellStage = isStage1 || isStage7;
+        const isPointDwellStage = isStage7; // ONLY Stage 7 uses Point & Dwell now
         const cursorX = isPointDwellStage ? indexX : (thumbX + indexX) / 2;
         const cursorY = isPointDwellStage ? indexY : (thumbY + indexY) / 2;
 
-        // Calculate pinch distance
+        // Dynamic Scale-Invariant Pinch Detection (relative to player's palm size)
+        const wrist = landmarks[0];
+        const middleMcp = landmarks[9];
         const dx = thumb.x - index.x;
         const dy = thumb.y - index.y;
-        const dz = (thumb.z - index.z) || 0;
-        const pinchDist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        const pinchDist2D = Math.hypot(dx, dy);
+        const handScale = Math.hypot(wrist.x - middleMcp.x, wrist.y - middleMcp.y) || 0.15;
+        const pinchRatio = pinchDist2D / handScale;
 
-        const PINCH_THRESHOLD = 0.085;
-        const currentlyPinching = pinchDist < PINCH_THRESHOLD;
+        // Hysteresis threshold: requires fingers to truly meet (< 0.32) to pinch, releases at > 0.44
+        const currentlyPinching = lastPinchState ? (pinchRatio < 0.44) : (pinchRatio < 0.32);
 
         // Velocity
         const vdx = cursorX - lastHandPos.x;
@@ -4406,84 +4410,37 @@
             }
           }
 
-          // Stage 1: Point & Dwell Hover Selection Logic (Option B)
+          // Stage 1: True Pinch Selection with Gentle Hover Highlight (No Auto-Select on Hover)
           if (isStage1) {
-            if (currentlyPinching || isEggGrabbed) {
-              if (hoveredEggId >= 0 && stage1Eggs[hoveredEggId] && !stage1Eggs[hoveredEggId].userData.isSelected && stage1Eggs[hoveredEggId].userData.basePos) {
-                stage1Eggs[hoveredEggId].position.y = stage1Eggs[hoveredEggId].userData.basePos[1];
+            let hoveredEgg = null;
+            let minEggDist = 85;
+
+            for (const egg of stage1Eggs) {
+              if (!egg || !egg.visible || egg.userData.isSelected) continue;
+              const sp = getObjectScreenPos(egg);
+              const dist = Math.hypot(cursorX - sp.x, cursorY - sp.y);
+              if (dist < minEggDist) {
+                minEggDist = dist;
+                hoveredEgg = egg;
               }
-              hoveredEggId = -1;
-              dwellStartTime = 0;
-              const dwellSvg = document.getElementById('dwell-svg');
-              if (dwellSvg) dwellSvg.style.display = 'none';
-            } else {
-              const now = Date.now();
-              const dwellSvg = document.getElementById('dwell-svg');
-              const dwellCircle = document.getElementById('dwell-progress-circle');
+            }
 
-              let pointedEgg = null;
-              let minDistance = 110;
-
-              for (const egg of stage1Eggs) {
-                if (!egg || !egg.visible || egg.userData.isSelected) continue;
-                const sp = getObjectScreenPos(egg);
-                const dist = Math.hypot(indexX - sp.x, indexY - sp.y);
-                if (dist < minDistance) {
-                  minDistance = dist;
-                  pointedEgg = egg;
-                }
-              }
-
-              if (pointedEgg && now > dwellCooldownUntil) {
-                isNearInteractable = true;
-                if (hoveredEggId === pointedEgg.userData.id) {
-                  const elapsed = now - dwellStartTime;
-                  const progress = Math.min(1, elapsed / DWELL_TARGET_MS);
-                  if (dwellSvg) dwellSvg.style.display = 'block';
-                  if (dwellCircle) {
-                    const offset = 150.8 * (1 - progress);
-                    dwellCircle.style.strokeDashoffset = offset;
-                  }
-                  if (cursorLabel) {
-                    cursorLabel.style.display = 'block';
-                    cursorLabel.textContent = `👉 กำลังเลือก... ${Math.round(progress * 100)}%`;
-                  }
-                  if (cursorDot) cursorDot.style.backgroundColor = '#22c55e';
-                  cursorEl.style.borderColor = '#22c55e';
-
-                  if (pointedEgg.userData.basePos) {
-                    pointedEgg.position.y = pointedEgg.userData.basePos[1] + 0.08 * Math.sin(now * 0.008);
-                  }
-
-                  if (progress >= 1.0) {
-                    selectEggDirectly(pointedEgg.userData.id);
-                    dwellCooldownUntil = now + 1200;
-                    hoveredEggId = -1;
-                    dwellStartTime = 0;
-                    if (dwellSvg) dwellSvg.style.display = 'none';
-                    if (cursorLabel) cursorLabel.style.display = 'none';
-                  }
-                } else {
-                  if (hoveredEggId >= 0 && stage1Eggs[hoveredEggId] && !stage1Eggs[hoveredEggId].userData.isSelected && stage1Eggs[hoveredEggId].userData.basePos) {
-                    stage1Eggs[hoveredEggId].position.y = stage1Eggs[hoveredEggId].userData.basePos[1];
-                  }
-                  hoveredEggId = pointedEgg.userData.id;
-                  dwellStartTime = now;
-                  if (dwellSvg) dwellSvg.style.display = 'block';
-                  if (dwellCircle) dwellCircle.style.strokeDashoffset = '150.8';
-                  if (cursorLabel) {
-                    cursorLabel.style.display = 'block';
-                    cursorLabel.textContent = '👉 ชี้ค้างไว้ 1 วินาที เพื่อเลือก';
-                  }
-                }
+            stage1Eggs.forEach(egg => {
+              if (!egg || !egg.visible || egg.userData.isSelected || !egg.userData.basePos) return;
+              if (hoveredEgg && egg.userData.id === hoveredEgg.userData.id) {
+                // Float gently to indicate aiming
+                egg.position.y = egg.userData.basePos[1] + 0.08;
               } else {
-                if (hoveredEggId >= 0 && stage1Eggs[hoveredEggId] && !stage1Eggs[hoveredEggId].userData.isSelected && stage1Eggs[hoveredEggId].userData.basePos) {
-                  stage1Eggs[hoveredEggId].position.y = stage1Eggs[hoveredEggId].userData.basePos[1];
-                }
-                hoveredEggId = -1;
-                dwellStartTime = 0;
-                if (dwellSvg) dwellSvg.style.display = 'none';
+                egg.position.y = egg.userData.basePos[1];
               }
+            });
+
+            if (hoveredEgg) {
+              isNearInteractable = true;
+              hoverText = '🤏 จีบนิ้วเพื่อเลือกไข่ใบนี้';
+              hoveredEggId = hoveredEgg.userData.id;
+            } else {
+              hoveredEggId = -1;
             }
           }
 
@@ -4506,7 +4463,7 @@
                 else c.classList.remove('is-pointing-target');
               });
 
-              if (hoveredEggId === cardId) {
+              if (hoveredChoiceCardId === cardId) {
                 const elapsed = now - dwellStartTime;
                 const progress = Math.min(1, elapsed / DWELL_TARGET_MS);
                 if (dwellSvg) dwellSvg.style.display = 'block';
@@ -4524,14 +4481,14 @@
                 if (progress >= 1.0) {
                   choiceCard.click();
                   dwellCooldownUntil = now + 1400;
-                  hoveredEggId = -1;
+                  hoveredChoiceCardId = null;
                   dwellStartTime = 0;
                   if (dwellSvg) dwellSvg.style.display = 'none';
                   if (cursorLabel) cursorLabel.style.display = 'none';
                   document.querySelectorAll('.standalone-choice-card').forEach(c => c.classList.remove('is-pointing-target'));
                 }
               } else {
-                hoveredEggId = cardId;
+                hoveredChoiceCardId = cardId;
                 dwellStartTime = now;
                 if (dwellSvg) dwellSvg.style.display = 'block';
                 if (dwellCircle) dwellCircle.style.strokeDashoffset = '150.8';
@@ -4541,9 +4498,9 @@
                 }
               }
             } else {
-              if (hoveredEggId !== -1 && isStage7) {
+              if (hoveredChoiceCardId !== null && isStage7) {
                 document.querySelectorAll('.standalone-choice-card').forEach(c => c.classList.remove('is-pointing-target'));
-                hoveredEggId = -1;
+                hoveredChoiceCardId = null;
                 dwellStartTime = 0;
                 if (dwellSvg) dwellSvg.style.display = 'none';
               }
@@ -4611,6 +4568,10 @@
           stage1Eggs[hoveredEggId].position.y = stage1Eggs[hoveredEggId].userData.basePos[1];
         }
         hoveredEggId = -1;
+        if (hoveredChoiceCardId !== null) {
+          document.querySelectorAll('.standalone-choice-card').forEach(c => c.classList.remove('is-pointing-target'));
+          hoveredChoiceCardId = null;
+        }
         dwellStartTime = 0;
         if (isEggGrabbed || isIngredientGrabbed) releaseGrabbedEgg();
         isPinching = false;
@@ -4652,8 +4613,7 @@
     function handlePinchClick(screenX, screenY) {
       sound.playTone(520, 'sine', 0.08, 0.15);
 
-      // Note: In Stage 1, pinch is dedicated to grabbing & rotating eggs in-place.
-      // Final egg selection is performed via Index Finger Point & Dwell (1.0s) or direct mouse click.
+      // Note: In Stage 1, egg selection is handled directly upon intentional pinch in tryGrabEgg().
 
       // 2. Interactive DOM elements (Buttons, Cards, Recipe ingredients)
       const hitEl = document.elementFromPoint(screenX, screenY);

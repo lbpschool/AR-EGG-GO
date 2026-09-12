@@ -2196,7 +2196,7 @@
       dinLabel.position.y = 0.52;
       dinContainerMesh.add(dinLabel);
       dinContainerMesh.position.set(-1.35, 0.25, 0.10);
-      dinContainerMesh.userData = { type: 'din', name: 'ดินสอพอง', homeX: -1.35, homeY: 0.25, homeZ: 0.10 };
+      dinContainerMesh.userData = { type: 'din', name: 'ดินสอพอง', homeX: -1.35, homeY: 0.25, homeZ: 0.10, hasPoured: false };
       dinContainerMesh.visible = false;
       scene.add(dinContainerMesh);
 
@@ -2208,7 +2208,7 @@
       saltLabel.position.y = 0.54;
       saltContainerMesh.add(saltLabel);
       saltContainerMesh.position.set(1.15, 0.30, -0.20);
-      saltContainerMesh.userData = { type: 'salt', name: 'เกลือป่น', homeX: 1.15, homeY: 0.30, homeZ: -0.20 };
+      saltContainerMesh.userData = { type: 'salt', name: 'เกลือป่น', homeX: 1.15, homeY: 0.30, homeZ: -0.20, hasPoured: false };
       saltContainerMesh.visible = false;
       scene.add(saltContainerMesh);
 
@@ -2220,7 +2220,7 @@
       waterLabel.position.y = 0.46;
       waterContainerMesh.add(waterLabel);
       waterContainerMesh.position.set(1.48, 0.22, 0.20);
-      waterContainerMesh.userData = { type: 'water', name: 'น้ำสะอาด', homeX: 1.48, homeY: 0.22, homeZ: 0.20 };
+      waterContainerMesh.userData = { type: 'water', name: 'น้ำสะอาด', homeX: 1.48, homeY: 0.22, homeZ: 0.20, hasPoured: false };
       waterContainerMesh.visible = false;
       scene.add(waterContainerMesh);
 
@@ -2506,18 +2506,21 @@
             dinContainerMesh.position.set(-1.35, 0.25, 0.10);
             dinContainerMesh.quaternion.copy(camera.quaternion);
             dinContainerMesh.scale.set(1, 1, 1);
+            if (dinContainerMesh.userData) dinContainerMesh.userData.hasPoured = false;
           }
           if (saltContainerMesh) {
             saltContainerMesh.visible = true;
             saltContainerMesh.position.set(1.15, 0.30, -0.20);
             saltContainerMesh.quaternion.copy(camera.quaternion);
             saltContainerMesh.scale.set(1, 1, 1);
+            if (saltContainerMesh.userData) saltContainerMesh.userData.hasPoured = false;
           }
           if (waterContainerMesh) {
             waterContainerMesh.visible = true;
             waterContainerMesh.position.set(1.48, 0.22, 0.20);
             waterContainerMesh.quaternion.copy(camera.quaternion);
             waterContainerMesh.scale.set(1, 1, 1);
+            if (waterContainerMesh.userData) waterContainerMesh.userData.hasPoured = false;
           }
           camera.position.set(0, 3.0, 3.4);
           controls.target.set(0, 0.35, 0);
@@ -3064,21 +3067,26 @@
         if (el) el.textContent = GAME_STATE.stage3.dinSorPhong + ' / 3';
         const pill = document.getElementById('pill-din');
         if (pill && GAME_STATE.stage3.dinSorPhong === 3) pill.classList.add('done');
-        showToast('⚪ เทดินสอพองลงกาละมังแล้ว (' + GAME_STATE.stage3.dinSorPhong + ' / 3)', 1500);
+        const count = GAME_STATE.stage3.dinSorPhong;
+        if (count < 3) {
+          showToast('⚪ เทดินสอพอง (' + count + ' / 3) แล้ว! ยกช้อนถอยออกไปตักใหม่', 2200);
+        } else if (count === 3) {
+          showToast('⚪ เทดินสอพองครบ 3 ส่วนแล้ว!', 2000);
+        }
       } else if (type === 'salt') {
         GAME_STATE.stage3.salt++;
         const el = document.getElementById('count-salt');
         if (el) el.textContent = GAME_STATE.stage3.salt + ' / 1';
         const pill = document.getElementById('pill-salt');
         if (pill && GAME_STATE.stage3.salt === 1) pill.classList.add('done');
-        showToast('🧂 เทเกลือป่นลงกาละมังแล้ว (' + GAME_STATE.stage3.salt + ' / 1)', 1500);
+        showToast('🧂 เทเกลือป่นลงกาละมังแล้ว (' + GAME_STATE.stage3.salt + ' / 1)', 1800);
       } else if (type === 'water') {
         GAME_STATE.stage3.water++;
         const el = document.getElementById('count-water');
         if (el) el.textContent = GAME_STATE.stage3.water + ' / 1';
         const pill = document.getElementById('pill-water');
         if (pill && GAME_STATE.stage3.water === 1) pill.classList.add('done');
-        showToast('💧 เทน้ำสะอาดลงกาละมังแล้ว (' + GAME_STATE.stage3.water + ' / 1)', 1500);
+        showToast('💧 เทน้ำสะอาดลงกาละมังแล้ว (' + GAME_STATE.stage3.water + ' / 1)', 1800);
       }
 
       const din = GAME_STATE.stage3.dinSorPhong;
@@ -3149,16 +3157,19 @@
         dinContainerMesh.position.set(-1.35, 0.25, 0.10);
         dinContainerMesh.quaternion.copy(camera.quaternion);
         dinContainerMesh.scale.set(1, 1, 1);
+        if (dinContainerMesh.userData) dinContainerMesh.userData.hasPoured = false;
       }
       if (saltContainerMesh) {
         saltContainerMesh.position.set(1.15, 0.30, -0.20);
         saltContainerMesh.quaternion.copy(camera.quaternion);
         saltContainerMesh.scale.set(1, 1, 1);
+        if (saltContainerMesh.userData) saltContainerMesh.userData.hasPoured = false;
       }
       if (waterContainerMesh) {
         waterContainerMesh.position.set(1.48, 0.22, 0.20);
         waterContainerMesh.quaternion.copy(camera.quaternion);
         waterContainerMesh.scale.set(1, 1, 1);
+        if (waterContainerMesh.userData) waterContainerMesh.userData.hasPoured = false;
       }
       if (pasteLiquidMesh) pasteLiquidMesh.visible = false;
       showToast('↺ เริ่มตักส่วนผสมใหม่');
@@ -3980,6 +3991,7 @@
           if (intersects.length > 0 || screenDist < 140) {
             grabbedIngredient = c;
             isIngredientGrabbed = true;
+            if (c.userData) c.userData.hasPoured = false;
             sound.playTone(520, 'sine', 0.08, 0.16);
             c.scale.set(1.15, 1.15, 1.15);
             showToast('🤏 หยิบ' + c.userData.name + 'แล้ว! ลากไปเอียงเทใส่กาละมังตรงกลาง', 1800);
@@ -4042,14 +4054,15 @@
 
           const distToBowl = Math.hypot(grabbedIngredient.position.x, grabbedIngredient.position.z);
 
-          // Over Mixing Basin (Center, distToBowl < 0.85)
-          if (distToBowl < 0.85) {
+          // Over Mixing Basin (Center, distToBowl < 0.80) -> Pour once!
+          if (distToBowl < 0.80) {
             grabbedIngredient.position.y = 0.58;
             const tiltDir = grabbedIngredient.position.x <= 0 ? -1 : 1;
             grabbedIngredient.quaternion.copy(camera.quaternion);
             grabbedIngredient.rotateZ(tiltDir * 0.85);
 
-            if (now - lastPourTime > 1100) {
+            if (!grabbedIngredient.userData.hasPoured) {
+              grabbedIngredient.userData.hasPoured = true;
               lastPourTime = now;
               const type = grabbedIngredient.userData.type;
               if (type === 'din') {
@@ -4066,6 +4079,16 @@
           } else {
             grabbedIngredient.position.y = 0.75;
             grabbedIngredient.quaternion.copy(camera.quaternion);
+
+            // Exit bowl zone (distToBowl > 1.15) -> Reload ready for next scoop!
+            if (distToBowl > 1.15 && grabbedIngredient.userData.hasPoured) {
+              grabbedIngredient.userData.hasPoured = false;
+              const type = grabbedIngredient.userData.type;
+              if (type === 'din' && GAME_STATE.stage3.dinSorPhong < 3) {
+                sound.playTone(560, 'sine', 0.08, 0.12);
+                showToast('✨ ตักดินสอพองเพิ่มแล้ว! นำมาเทในกาละมังได้เลย (' + GAME_STATE.stage3.dinSorPhong + '/3)', 1800);
+              }
+            }
           }
         }
         return;
@@ -4224,6 +4247,7 @@
         isIngredientGrabbed = false;
         grabbedIngredient.scale.set(1.0, 1.0, 1.0);
         grabbedIngredient.quaternion.copy(camera.quaternion);
+        if (grabbedIngredient.userData) grabbedIngredient.userData.hasPoured = false;
         sound.playTone(380, 'sine', 0.06, 0.12);
 
         const homeX = grabbedIngredient.userData.homeX;

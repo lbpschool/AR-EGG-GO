@@ -3783,6 +3783,12 @@
     const DWELL_TARGET_MS = 1000;
     let dwellCooldownUntil = 0;
 
+    // Robust Pinch & Hold Persistence States (prevents objects slipping mid-drag)
+    let unpinchStartTime = 0;
+    const UNPINCH_HOLD_GRACE_MS = 220; // 220ms debounce window before releasing a held object
+    let handLostStartTime = 0;
+    const HAND_LOST_HOLD_GRACE_MS = 380; // 380ms grace window for momentary camera tracking dropout
+
     const HAND_CONNECTIONS = [
       [0, 1], [1, 2], [2, 3], [3, 4],       // Thumb
       [0, 5], [5, 6], [6, 7], [7, 8],       // Index
@@ -4211,6 +4217,9 @@
     }
 
     function releaseGrabbedEgg() {
+      unpinchStartTime = 0;
+      handLostStartTime = 0;
+
       if (isIngredientGrabbed && grabbedIngredient) {
         isIngredientGrabbed = false;
         grabbedIngredient.scale.set(1.0, 1.0, 1.0);
@@ -4300,6 +4309,7 @@
       const cursorLabel = document.getElementById('hand-cursor-label');
 
       if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        handLostStartTime = 0; // Hand tracking active: reset tracking-lost timer
         const landmarks = results.multiHandLandmarks[0];
 
         // Draw glowing hand skeleton
@@ -4307,6 +4317,9 @@
 
         const thumb = landmarks[4];
         const index = landmarks[8];
+        const middleTip = landmarks[12];
+        const wrist = landmarks[0];
+        const middleMcp = landmarks[9];
 
         // Horizontal flip for front webcam mirror view
         const thumbX = (1 - thumb.x) * canvas.width;
@@ -4321,16 +4334,52 @@
         const cursorY = isPointDwellStage ? indexY : (thumbY + indexY) / 2;
 
         // Dynamic Scale-Invariant Pinch Detection (relative to player's palm size)
-        const wrist = landmarks[0];
-        const middleMcp = landmarks[9];
-        const dx = thumb.x - index.x;
-        const dy = thumb.y - index.y;
-        const pinchDist2D = Math.hypot(dx, dy);
-        const handScale = Math.hypot(wrist.x - middleMcp.x, wrist.y - middleMcp.y) || 0.15;
-        const pinchRatio = pinchDist2D / handScale;
+        const distThumbIndex = Math.hypot(thumb.x - index.x, thumb.y - index.y);
+        // Multi-finger grip stability: also support thumb-to-middle contact during movement
+        const distThumbMiddle = Math.hypot(thumb.x - middleTip.x, thumb.y - middleTip.y);
+        const effectivePinchDist = Math.min(distThumbIndex, distThumbMiddle * 1.12);
 
-        // Hysteresis threshold: requires fingers to truly meet (< 0.32) to pinch, releases at > 0.44
-        const currentlyPinching = lastPinchState ? (pinchRatio < 0.44) : (pinchRatio < 0.32);
+        const handScale = Math.hypot(wrist.x - middleMcp.x, wrist.y - middleMcp.y) || 0.15;
+        const pinchRatio = effectivePinchDist / handScale;
+
+        const isHoldingObject = isEggGrabbed || isIngredientGrabbed;
+
+        // Sticky Grip & Hysteresis Thresholds:
+        // - To initiate a new pinch (Stage 1 egg select, or grabbing egg/bottle): intentional pinch required (< 0.35)
+        // - To sustain pinch with empty hand (e.g. clicking UI buttons): < 0.48
+        // - To sustain grip on a held object (Sticky Grip): forgiving threshold (< 0.65)
+        let rawPinching = false;
+        if (isHoldingObject) {
+          rawPinching = (pinchRatio < 0.65);
+        } else if (lastPinchState) {
+          rawPinching = (pinchRatio < 0.48);
+        } else {
+          rawPinching = (pinchRatio < 0.35);
+        }
+
+        // Temporal release debounce (Grace window) while holding objects:
+        // Prevents momentary camera noise, fast motion blur, or hand angle changes from dropping objects
+        const now = Date.now();
+        let currentlyPinching = false;
+        if (rawPinching) {
+          unpinchStartTime = 0;
+          currentlyPinching = true;
+        } else {
+          if (isHoldingObject && lastPinchState) {
+            if (!unpinchStartTime) {
+              unpinchStartTime = now;
+            }
+            if (now - unpinchStartTime < UNPINCH_HOLD_GRACE_MS) {
+              currentlyPinching = true; // Retain hold during grace period
+            } else {
+              currentlyPinching = false; // Intentional release after grace period
+              unpinchStartTime = 0;
+            }
+          } else {
+            unpinchStartTime = 0;
+            currentlyPinching = false;
+          }
+        }
 
         // Velocity
         const vdx = cursorX - lastHandPos.x;
@@ -4561,6 +4610,21 @@
         lastPinchState = currentlyPinching;
         isPinching = currentlyPinching;
       } else {
+        const now = Date.now();
+        const isHoldingObject = isEggGrabbed || isIngredientGrabbed;
+
+        // If an object is currently held, give a grace period before dropping
+        // in case hand was temporarily obscured or at the edge of the webcam frame
+        if (isHoldingObject) {
+          if (!handLostStartTime) handLostStartTime = now;
+          if (now - handLostStartTime < HAND_LOST_HOLD_GRACE_MS) {
+            // Keep held object in place during momentary camera frame dropout
+            return;
+          }
+        }
+
+        handLostStartTime = 0;
+        unpinchStartTime = 0;
         if (cursorEl) cursorEl.style.display = 'none';
         const dwellSvg = document.getElementById('dwell-svg');
         if (dwellSvg) dwellSvg.style.display = 'none';

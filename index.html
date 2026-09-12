@@ -758,6 +758,82 @@
       transform: rotate(-45deg);
     }
 
+    /* Prominent AR Reset Button in Stage 3 Recipe Capsule */
+    .s3-ar-reset-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 13px;
+      border-radius: 14px;
+      border: 1.5px solid #f87171;
+      background: linear-gradient(135deg, rgba(254, 242, 242, 0.95), rgba(254, 226, 226, 0.95));
+      color: #dc2626;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+
+    .s3-ar-reset-btn:hover {
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+      border-color: #ef4444;
+      color: #b91c1c;
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+    }
+
+    .s3-ar-reset-btn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .s3-ar-reset-btn .reset-icon {
+      font-size: 15px;
+      font-weight: 900;
+      display: inline-block;
+      transition: transform 0.3s ease;
+    }
+
+    .s3-ar-reset-btn:hover .reset-icon {
+      transform: rotate(-90deg);
+    }
+
+    /* Dedicated Floating AR Button for Resetting Scoop in Stage 3 */
+    .btn-ar-floating-reset {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 999;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 50px;
+      border: 2px solid rgba(239, 68, 68, 0.85);
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      color: #dc2626;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.25);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+
+    .btn-ar-floating-reset:hover {
+      background: #fee2e2;
+      border-color: #dc2626;
+      transform: scale(1.05);
+      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.35);
+    }
+
+    .btn-ar-floating-reset:active {
+      transform: scale(0.96);
+    }
+
     .s3-knead-row {
       display: flex;
       align-items: center;
@@ -1838,6 +1914,12 @@
       </div>
     </div>
 
+    <!-- Floating AR Reset Button for Stage 3 -->
+    <button id="btn-ar-floating-reset" class="btn-ar-floating-reset" onclick="resetRecipe()" title="กดเพื่อเริ่มทำการตักใหม่">
+      <span style="font-size: 18px; font-weight: 900; line-height: 1;">↺</span>
+      <span>เริ่มทำการตักใหม่</span>
+    </button>
+
     <!-- Mascot Speech Area -->
     <div class="mascot-container interactive">
       <div class="mascot-avatar" id="mascot-icon-wrapper" style="overflow: hidden; padding: 0; background: #fff;">
@@ -2726,7 +2808,7 @@
        ========================================================== */
     let scene, camera, renderer, controls;
     let tableGroup, eggMesh, waterBasinMesh, clothMesh, bowlMesh, huskTrayMesh, eggCartonMesh, cartonPlane;
-    let dinContainerMesh, saltContainerMesh, waterContainerMesh;
+    let dinContainerMesh, saltContainerMesh, waterContainerMesh, s3ResetSprite;
     let bowlPlane;
     let grabbedIngredient = null;
     let isIngredientGrabbed = false;
@@ -3098,17 +3180,24 @@
       saltContainerMesh.visible = false;
       scene.add(saltContainerMesh);
 
-      // 3. Water Pitcher (Lower-Right / Foreground - Upright & Straight)
+      // 3. Water Pitcher (Placed directly below Mixing Basin: X=0, Y=-0.32, Z=0.92)
       waterContainerMesh = new THREE.Group();
       const waterPlane = createPhotoMesh('water_pitcher', 0.82, 0.88, { roughness: 0.2 });
       waterContainerMesh.add(waterPlane);
       const waterLabel = makeTextSprite('💧 น้ำสะอาด', '#0369a1');
       waterLabel.position.y = 0.46;
       waterContainerMesh.add(waterLabel);
-      waterContainerMesh.position.set(1.48, 0.22, 0.20);
-      waterContainerMesh.userData = { type: 'water', name: 'น้ำสะอาด', homeX: 1.48, homeY: 0.22, homeZ: 0.20, hasPoured: false };
+      waterContainerMesh.position.set(0, -0.32, 0.92);
+      waterContainerMesh.userData = { type: 'water', name: 'น้ำสะอาด', homeX: 0, homeY: -0.32, homeZ: 0.92, hasPoured: false };
       waterContainerMesh.visible = false;
       scene.add(waterContainerMesh);
+
+      // Stage 3: AR Interactive 3D Reset Button Sprite
+      s3ResetSprite = makeTextSprite('↺ เริ่มทำการตักใหม่', '#dc2626');
+      s3ResetSprite.position.set(1.25, -0.30, 0.85);
+      s3ResetSprite.userData = { isResetBtn: true };
+      s3ResetSprite.visible = false;
+      scene.add(s3ResetSprite);
 
       setupStage1Eggs();
     }
@@ -3343,6 +3432,9 @@
       if (dinContainerMesh) dinContainerMesh.visible = false;
       if (saltContainerMesh) saltContainerMesh.visible = false;
       if (waterContainerMesh) waterContainerMesh.visible = false;
+      if (s3ResetSprite) s3ResetSprite.visible = false;
+      const floatingResetBtn = document.getElementById('btn-ar-floating-reset');
+      if (floatingResetBtn) floatingResetBtn.style.display = (stage === 3 ? 'flex' : 'none');
       if (huskTrayMesh) huskTrayMesh.visible = false;
       if (eggCartonMesh) eggCartonMesh.visible = false;
       if (eggMesh) {
@@ -3446,10 +3538,14 @@
           }
           if (waterContainerMesh) {
             waterContainerMesh.visible = true;
-            waterContainerMesh.position.set(1.48, 0.22, 0.20);
+            waterContainerMesh.position.set(0, -0.32, 0.92);
             waterContainerMesh.quaternion.copy(camera.quaternion);
             waterContainerMesh.scale.set(1, 1, 1);
             if (waterContainerMesh.userData) waterContainerMesh.userData.hasPoured = false;
+          }
+          if (s3ResetSprite) {
+            s3ResetSprite.visible = true;
+            s3ResetSprite.quaternion.copy(camera.quaternion);
           }
           camera.position.set(0, 3.0, 3.4);
           controls.target.set(0, 0.35, 0);
@@ -3472,7 +3568,10 @@
                   <span>💧 น้ำสะอาด</span>
                   <span class="s3-pill-count" id="count-water">${GAME_STATE.stage3.water} / 1</span>
                 </div>
-                <button class="s3-reset-btn" onclick="resetRecipe()" title="ตักใหม่">↺</button>
+                <button class="s3-ar-reset-btn" id="btn-ar-reset-recipe" onclick="resetRecipe()" title="กดเพื่อเริ่มทำการตักใหม่">
+                  <span class="reset-icon">↺</span>
+                  <span class="reset-text">เริ่มทำการตักใหม่</span>
+                </button>
               </div>
 
               <div class="s3-knead-row" id="knead-interactive-area" style="display: ${isRecipeReady ? 'flex' : 'none'};">
@@ -4088,10 +4187,13 @@
         if (saltContainerMesh.userData) saltContainerMesh.userData.hasPoured = false;
       }
       if (waterContainerMesh) {
-        waterContainerMesh.position.set(1.48, 0.22, 0.20);
+        waterContainerMesh.position.set(0, -0.32, 0.92);
         waterContainerMesh.quaternion.copy(camera.quaternion);
         waterContainerMesh.scale.set(1, 1, 1);
         if (waterContainerMesh.userData) waterContainerMesh.userData.hasPoured = false;
+      }
+      if (s3ResetSprite) {
+        s3ResetSprite.quaternion.copy(camera.quaternion);
       }
       if (pasteLiquidMesh) pasteLiquidMesh.visible = false;
       showToast('↺ เริ่มตักส่วนผสมใหม่');
@@ -5333,6 +5435,23 @@
           }
         }
 
+        if (s3ResetSprite && s3ResetSprite.visible) {
+          const raycaster = new THREE.Raycaster();
+          const mouseNDC = new THREE.Vector2(
+            (screenX / window.innerWidth) * 2 - 1,
+            -(screenY / window.innerHeight) * 2 + 1
+          );
+          raycaster.setFromCamera(mouseNDC, camera);
+          const intersects = raycaster.intersectObject(s3ResetSprite, true);
+          const screenPos = getObjectScreenPos(s3ResetSprite);
+          const screenDist = Math.hypot(screenX - screenPos.x, screenY - screenPos.y);
+          if (intersects.length > 0 || screenDist < 120) {
+            sound.playTone(480, 'sine', 0.08, 0.15);
+            resetRecipe();
+            return true;
+          }
+        }
+
         const containers = [dinContainerMesh, saltContainerMesh, waterContainerMesh];
         for (const c of containers) {
           if (!c || !c.visible) continue;
@@ -5438,8 +5557,9 @@
             grabbedIngredient.position.y = 0.75;
             grabbedIngredient.quaternion.copy(camera.quaternion);
 
-            // Exit bowl zone (distToBowl > 1.15) -> Reload ready for next scoop!
-            if (distToBowl > 1.15 && grabbedIngredient.userData.hasPoured) {
+            // Exit bowl zone -> Reload ready for next scoop!
+            const reloadDist = (grabbedIngredient.userData && grabbedIngredient.userData.type === 'water') ? 0.88 : 1.10;
+            if (distToBowl > reloadDist && grabbedIngredient.userData.hasPoured) {
               grabbedIngredient.userData.hasPoured = false;
               const type = grabbedIngredient.userData.type;
               if (type === 'din' && GAME_STATE.stage3.dinSorPhong < 3) {
@@ -5826,6 +5946,13 @@
               if (Math.hypot(cursorX - bowlScreen.x, cursorY - bowlScreen.y) < 160) {
                 isNearInteractable = true;
                 hoverText = '🥣 จีบจับ/ขยำในกะละมังเพื่อผสม';
+              }
+            }
+            if (s3ResetSprite && s3ResetSprite.visible) {
+              const sp = getObjectScreenPos(s3ResetSprite);
+              if (Math.hypot(cursorX - sp.x, cursorY - sp.y) < 120) {
+                isNearInteractable = true;
+                hoverText = '↺ จีบเพื่อเริ่มทำการตักใหม่';
               }
             }
             const containers = [dinContainerMesh, saltContainerMesh, waterContainerMesh];

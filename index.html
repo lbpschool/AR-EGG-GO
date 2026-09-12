@@ -3680,6 +3680,37 @@
             }
           }
 
+          // Stage 2: Helpful guidance when hovering basin/cloth without egg vs holding egg
+          if (GAME_STATE.currentStage === 2) {
+            if (!isEggGrabbed) {
+              if (waterBasinMesh && waterBasinMesh.visible) {
+                const basinScreen = getObjectScreenPos(waterBasinMesh);
+                if (Math.hypot(cursorX - basinScreen.x, cursorY - basinScreen.y) < 140) {
+                  isNearInteractable = true;
+                  hoverText = '💧 หยิบไข่มาจุ่มล้างที่นี่';
+                }
+              }
+              if (clothMesh && clothMesh.visible) {
+                const clothScreen = getObjectScreenPos(clothMesh);
+                if (Math.hypot(cursorX - clothScreen.x, cursorY - clothScreen.y) < 140) {
+                  isNearInteractable = true;
+                  hoverText = '🧺 หยิบไข่มาเช็ดแห้งที่นี่';
+                }
+              }
+            } else {
+              if (eggMesh && eggMesh.position.x < -0.40) {
+                isNearInteractable = true;
+                hoverText = '💧 กำลังล้างไข่ในอ่างน้ำ...';
+              } else if (eggMesh && eggMesh.position.x > 0.40) {
+                isNearInteractable = true;
+                hoverText = '🧺 กำลังเช็ดไข่บนผ้า...';
+              } else {
+                isNearInteractable = true;
+                hoverText = '🥚 ถือไข่เป็ดอยู่';
+              }
+            }
+          }
+
           if (GAME_STATE.currentStage === 3) {
             const containers = [dinContainerMesh, saltContainerMesh, waterContainerMesh];
             for (const c of containers) {
@@ -3894,25 +3925,10 @@
       const now = Date.now();
       const stage = GAME_STATE.currentStage;
 
-      // Stage 2: Rubbing fallback
-      if (stage === 2) {
-        if (moveDist > 12 && now - lastActionTime > 180) {
-          lastActionTime = now;
-          if (eggMesh) {
-            eggMesh.rotation.x = 0;
-            eggMesh.rotation.y = 0;
-            eggMesh.rotation.z -= 0.05;
-          }
-          if (!GAME_STATE.stage2.isClean) {
-            actionWashEgg(4);
-          } else if (!GAME_STATE.stage2.isDry) {
-            actionDryEgg(4);
-          }
-        }
-      }
+      // Stage 2: Only washed and dried when egg is physically dragged to basin or cloth (enforced in updateGrabbedEggPosition)
 
       // Stage 3: Circular motion in the air to knead dough
-      else if (stage === 3 && GAME_STATE.stage3.dinSorPhong === 3 && GAME_STATE.stage3.salt === 1 && GAME_STATE.stage3.water === 1) {
+      if (stage === 3 && GAME_STATE.stage3.dinSorPhong === 3 && GAME_STATE.stage3.salt === 1 && GAME_STATE.stage3.water === 1) {
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight * 0.55;
         const currentAngle = Math.atan2(cursorY - centerY, cursorX - centerX);

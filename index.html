@@ -1594,30 +1594,37 @@
 
     function makeTextSprite(message, bgColor = '#1f2937') {
       const canvas = document.createElement('canvas');
-      canvas.width = 256;
-      canvas.height = 72;
       const ctx = canvas.getContext('2d');
+      ctx.font = 'bold 26px Prompt, sans-serif';
+      const textMetrics = ctx.measureText(message);
+      const textW = Math.ceil(textMetrics.width);
+      const padX = 26;
+      canvas.width = Math.max(260, textW + padX * 2);
+      canvas.height = 72;
+
+      // Re-apply font after canvas resize (resizing clears context state)
+      ctx.font = 'bold 26px Prompt, sans-serif';
       ctx.fillStyle = bgColor;
       ctx.beginPath();
       if (ctx.roundRect) {
-        ctx.roundRect(6, 6, 244, 60, 16);
+        ctx.roundRect(4, 4, canvas.width - 8, canvas.height - 8, 16);
       } else {
-        ctx.rect(6, 6, 244, 60);
+        ctx.rect(4, 4, canvas.width - 8, canvas.height - 8);
       }
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 4;
       ctx.stroke();
-      ctx.font = 'bold 28px Prompt, sans-serif';
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(message, 128, 36);
+      ctx.fillText(message, canvas.width / 2, canvas.height / 2);
 
       const texture = new THREE.CanvasTexture(canvas);
       const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
       const sprite = new THREE.Sprite(spriteMat);
-      sprite.scale.set(0.7, 0.2, 1);
+      const aspect = canvas.width / canvas.height;
+      sprite.scale.set(0.22 * aspect, 0.22, 1);
       return sprite;
     }
 
@@ -1764,6 +1771,9 @@
       const trayPlane = createPhotoMesh('husk_tray', 1.85, 1.85, { roughness: 0.85 });
       trayPlane.rotation.x = -0.32;
       huskTrayMesh.add(trayPlane);
+      const huskTrayLabel = makeTextSprite('🌾 ถาดแกลบดำ', '#1f2937');
+      huskTrayLabel.position.set(0, 0.70, 0.15);
+      huskTrayMesh.add(huskTrayLabel);
       huskTrayMesh.position.set(0, 0.2, 0);
       huskTrayMesh.visible = false;
       scene.add(huskTrayMesh);
@@ -2163,7 +2173,13 @@
         case 5:
           badgeText.textContent = 'ด่านที่ 5 : คลุกแกลบดำ';
           setMascot('นำไข่ที่พอกเสร็จลงไปคลุกแกลบดำ เพื่อไม่ให้ไข่ติดกันและช่วยรักษาความชื้นจ้า', 'thinking');
+          
+          // 1. Setup Husk Tray on the Left
           huskTrayMesh.visible = true;
+          huskTrayMesh.position.set(-0.80, 0.24, 0.05);
+          huskTrayMesh.scale.set(0.82, 0.82, 0.82);
+
+          // 2. Setup Egg on the Right
           eggMesh.visible = true;
           if (realTextures['egg_clay']) {
             eggMesh.material.map = realTextures['egg_clay'];
@@ -2171,29 +2187,26 @@
             eggMesh.material.needsUpdate = true;
           }
           eggMesh.scale.set(1.0, 1.0, 1.0);
-          eggMesh.position.set(0, 0.45, 0);
+          eggMesh.position.set(0.55, 0.50, 0.05);
           eggMesh.rotation.set(0, 0, 0);
-          eggMesh.rotation.set(0, 0, 0);
-          eggMesh.rotation.set(0, 0, 0);
-          eggMesh.rotation.set(0, 0, 0);
-          eggMesh.rotation.set(0, 0, 0);
-          eggMesh.rotation.set(0, 0, 0);
-          camera.position.set(0, 2.2, 2.4);
 
+          camera.position.set(0, 1.9, 2.7);
+          controls.target.set(0, 0.38, 0);
+          camera.lookAt(0, 0.38, 0);
+
+          // 3. Sleek minimal glass progress capsule (Card removed)
+          actionCard.className = 'action-card stage4-glass-card';
           actionCard.innerHTML = `
-            <h3>ภารกิจ: กลิ้งไข่คลุกแกลบดำ</h3>
-            <p style="margin: 4px 0 8px; font-size: 13px; color: #4b5563;">กลิ้งไข่ไปมาในถาดแกลบดำจนดำทั่วฟอง</p>
-
-            <div class="progress-bar-container">
-              <div id="s5-husk-progress" class="progress-bar-fill" style="width: 0%; background: #1f2937;"></div>
+            <div class="s4-glass-meter-container">
+              <div class="s4-meter-header">
+                <span class="s4-meter-title">🌾 ความครอบคลุมแกลบดำ:</span>
+                <span class="s4-meter-val" id="s5-husk-val">${GAME_STATE.stage5.huskPercent}%</span>
+              </div>
+              <div class="s4-meter-track">
+                <div id="s5-husk-progress" class="s4-meter-fill" style="width: ${GAME_STATE.stage5.huskPercent}%; background: linear-gradient(90deg, #4b5563, #111827);"></div>
+              </div>
             </div>
-            <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px;" id="s5-husk-val">ความครอบคลุมแกลบดำ: 0%</div>
-
-            <button class="btn btn-accent btn-lg" onclick="actionRollInHusk()">
-              🌾 กลิ้งไข่ในถาดแกลบดำ
-            </button>
-            
-            <button id="btn-s5-next" class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="finishStage5()" disabled>
+            <button id="btn-s5-next" class="s4-next-btn" onclick="finishStage5()" style="display: ${GAME_STATE.stage5.done ? 'block' : 'none'};">
               ไปขั้นตอนต่อไป ➔
             </button>
           `;
@@ -2702,12 +2715,13 @@
 
     function actionCoatClay() {
       sound.playCoat();
-      GAME_STATE.stage4.coveredPercent = Math.min(100, GAME_STATE.stage4.coveredPercent + 25);
+      GAME_STATE.stage4.coveredPercent = Math.min(100, GAME_STATE.stage4.coveredPercent + 20);
       document.getElementById('s4-cover-progress').style.width = GAME_STATE.stage4.coveredPercent + '%';
-      document.getElementById('s4-cover-val').textContent = GAME_STATE.stage4.coveredPercent + '%';
+      const count = Math.round(GAME_STATE.stage4.coveredPercent / 20);
+      document.getElementById('s4-cover-val').textContent = GAME_STATE.stage4.coveredPercent + '% (' + count + '/5 ครั้ง)';
 
       if (eggMesh) {
-        if (GAME_STATE.stage4.coveredPercent >= 75 && realTextures['egg_clay']) {
+        if (GAME_STATE.stage4.coveredPercent >= 80 && realTextures['egg_clay']) {
           eggMesh.material.map = realTextures['egg_clay'];
           eggMesh.material.needsUpdate = true;
         } else {
@@ -2719,12 +2733,12 @@
       }
 
       if (GAME_STATE.stage4.coveredPercent < 100) {
-        setMascot('พอกไปได้ ' + GAME_STATE.stage4.coveredPercent + '% แล้ว! หมุนตรวจดูรอบฟอง 360° นะจ๊ะ', 'thinking');
+        setMascot('พอกไปได้ ' + count + '/5 ครั้ง (' + GAME_STATE.stage4.coveredPercent + '%) แล้ว! จุ่มพอกให้ทั่วฟองนะจ๊ะ', 'thinking');
       } else {
         GAME_STATE.stage4.done = true;
         sound.playTriumph();
         confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
-        showToast('🌟 พอกไข่ครบ 100% เรียบเนียนสม่ำเสมอ!');
+        showToast('🌟 พอกไข่ครบ 5 ครั้ง (100%) เรียบเนียนสม่ำเสมอ!');
         setMascot('พอกได้หนาและสม่ำเสมอทั่วทั้งฟอง เยี่ยมยอดที่สุด! กดปุ่มเพื่อไปต่อได้เลยจ้า', 'celebrate');
         const nextBtn = document.getElementById('btn-s4-next');
         if (nextBtn) {
@@ -2760,13 +2774,14 @@
 
     function actionRollInHusk() {
       sound.playTone(200, 'triangle', 0.12, 0.1);
-      GAME_STATE.stage5.huskPercent = Math.min(100, GAME_STATE.stage5.huskPercent + 25);
+      GAME_STATE.stage5.huskPercent = Math.min(100, GAME_STATE.stage5.huskPercent + 20);
       document.getElementById('s5-husk-progress').style.width = GAME_STATE.stage5.huskPercent + '%';
-      document.getElementById('s5-husk-val').textContent = 'ความครอบคลุมแกลบดำ: ' + GAME_STATE.stage5.huskPercent + '%';
+      const count = Math.round(GAME_STATE.stage5.huskPercent / 20);
+      document.getElementById('s5-husk-val').textContent = GAME_STATE.stage5.huskPercent + '% (' + count + '/5 ครั้ง)';
 
       if (eggMesh) {
         eggMesh.rotation.z -= 0.35;
-        if (GAME_STATE.stage5.huskPercent >= 50 && realTextures['egg_husk']) {
+        if (GAME_STATE.stage5.huskPercent >= 40 && realTextures['egg_husk']) {
           eggMesh.material.map = realTextures['egg_husk'];
           eggMesh.material.needsUpdate = true;
           const factor = 0.5 + (1 - GAME_STATE.stage5.huskPercent / 100) * 0.5;
@@ -2779,10 +2794,15 @@
 
       if (GAME_STATE.stage5.huskPercent >= 100 && !GAME_STATE.stage5.done) {
         GAME_STATE.stage5.done = true;
-        sound.playCorrect();
-        showToast('🌾 แกลบดำเคลือบติดทั่วไข่แล้ว!');
+        sound.playTriumph();
+        confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+        showToast('🌾 แกลบดำเคลือบติดทั่วไข่ครบ 100%!');
         setMascot('รู้ไหมเอ่ย? แกลบดำช่วยไม่ให้ไข่ติดกัน และช่วยรักษาความชื้นของดินสอพองที่พอกไว้จ้า', 'celebrate');
-        document.getElementById('btn-s5-next').disabled = false;
+        const nextBtn = document.getElementById('btn-s5-next');
+        if (nextBtn) {
+          nextBtn.disabled = false;
+          nextBtn.style.display = 'block';
+        }
       }
     }
 
@@ -3355,27 +3375,7 @@
         return false;
       }
 
-      // Stage 4: Allow direct tap on Clay Paste Basin to coat
-      if (stage === 4 && bowlMesh && bowlMesh.visible) {
-        const bowlScreen = getObjectScreenPos(bowlMesh);
-        const distBowl = Math.hypot(screenX - bowlScreen.x, screenY - bowlScreen.y);
-        const raycaster = new THREE.Raycaster();
-        const mouseNDC = new THREE.Vector2(
-          (screenX / window.innerWidth) * 2 - 1,
-          -(screenY / window.innerHeight) * 2 + 1
-        );
-        raycaster.setFromCamera(mouseNDC, camera);
-        const bowlHits = raycaster.intersectObjects(bowlMesh.children, true);
-        if (bowlHits.length > 0 || distBowl < 140) {
-          actionCoatClay();
-          spawnSparkleParticles(bowlMesh.position.x, 0.38, bowlMesh.position.z);
-          bowlMesh.scale.set(0.94, 0.94, 0.94);
-          setTimeout(() => { if (bowlMesh && GAME_STATE.currentStage === 4) bowlMesh.scale.set(0.88, 0.88, 0.88); }, 130);
-          return true;
-        }
-      }
-
-      // Stages 2, 4, 5, 6: Grab Egg
+      // Stages 2, 4, 5, 6: Grab Egg (Player must grab egg first)
       if (!eggMesh || !eggMesh.visible) return false;
 
       if (stage === 2 || stage === 4 || stage === 5 || stage === 6) {
@@ -3396,13 +3396,15 @@
           if (stage === 2) {
             eggMesh.scale.set(0.78, 0.78, 0.78);
             showToast('🤏 หยิบไข่แล้ว! ลากไปจุ่มในอ่างน้ำ (ซ้าย) หรือเช็ดผ้า (ขวา)', 1800);
-          } else {
+          } else if (stage === 4) {
             eggMesh.scale.set(1.15, 1.15, 1.15);
-            if (stage === 5) {
-              showToast('🤏 หยิบไข่แล้ว! กลิ้งไปมาในถาดแกลบดำได้เลย', 1800);
-            } else if (stage === 6) {
-              showToast('🤏 หยิบไข่แล้ว! ลากไปวางลงในกล่องได้เลย', 1800);
-            }
+            showToast('🤏 หยิบไข่แล้ว! นำไปจุ่มในภาชนะดินสอพอง (ซ้าย) 5 ครั้งให้ทั่วฟอง', 2000);
+          } else if (stage === 5) {
+            eggMesh.scale.set(1.15, 1.15, 1.15);
+            showToast('🤏 หยิบไข่แล้ว! นำไปกลิ้งคลุกในถาดแกลบดำ (ซ้าย) ให้ดำทั่วฟอง', 2000);
+          } else if (stage === 6) {
+            eggMesh.scale.set(1.15, 1.15, 1.15);
+            showToast('🤏 หยิบไข่แล้ว! ลากไปวางลงในกล่องได้เลย', 1800);
           }
           return true;
         }
@@ -3525,10 +3527,14 @@
             eggMesh.rotation.y = 0;
             eggMesh.rotation.z -= 0.06; // roll in paste
 
-            if (now - lastCoatTime > 280) {
+            if (now - lastCoatTime > 500) {
               lastCoatTime = now;
               actionCoatClay();
               spawnSparkleParticles(eggMesh.position.x, 0.32, eggMesh.position.z);
+              if (bowlMesh) {
+                bowlMesh.scale.set(0.94, 0.94, 0.94);
+                setTimeout(() => { if (bowlMesh && GAME_STATE.currentStage === 4) bowlMesh.scale.set(0.88, 0.88, 0.88); }, 130);
+              }
             }
           } else {
             // Held in air to inspect and rotate
@@ -3540,21 +3546,39 @@
           }
         }
       } else if (stage === 5) {
-        const pt = getPointOnPlane(screenX, screenY, 0.35);
+        const pt = getPointOnPlane(screenX, screenY, 0.45);
         if (pt) {
-          const targetX = Math.max(-0.65, Math.min(0.65, pt.x));
-          const targetZ = Math.max(-0.4, Math.min(0.4, pt.z));
-          const dx = targetX - eggMesh.position.x;
-          eggMesh.position.x = targetX;
-          eggMesh.position.z = targetZ;
-          eggMesh.position.y = 0.35;
-          eggMesh.rotation.x = 0;
-          eggMesh.rotation.y = 0;
-          eggMesh.rotation.z -= dx * 2.5;
+          const targetX = Math.max(-1.3, Math.min(1.1, pt.x));
+          const targetZ = Math.max(-0.6, Math.min(0.6, pt.z));
 
-          if (Math.abs(dx) > 0.015 && now - lastHuskRollTime > 160) {
-            lastHuskRollTime = now;
-            actionRollInHusk();
+          eggMesh.position.x += (targetX - eggMesh.position.x) * 0.45;
+          eggMesh.position.z += (targetZ - eggMesh.position.z) * 0.45;
+
+          const distToTray = Math.hypot(eggMesh.position.x - (-0.80), eggMesh.position.z - 0.05);
+
+          // Over or dipping into charcoal husk tray (Left side, distToTray < 0.65 || eggMesh.position.x < -0.35)
+          if (distToTray < 0.65 || eggMesh.position.x < -0.35) {
+            eggMesh.position.y = 0.26; // dip down into husk tray
+            eggMesh.rotation.x = 0;
+            eggMesh.rotation.y = 0;
+            eggMesh.rotation.z -= 0.12; // roll in husk
+
+            if (now - lastHuskRollTime > 450) {
+              lastHuskRollTime = now;
+              actionRollInHusk();
+              spawnSparkleParticles(eggMesh.position.x, 0.30, eggMesh.position.z);
+              if (huskTrayMesh) {
+                huskTrayMesh.scale.set(0.88, 0.88, 0.88);
+                setTimeout(() => { if (huskTrayMesh && GAME_STATE.currentStage === 5) huskTrayMesh.scale.set(0.82, 0.82, 0.82); }, 130);
+              }
+            }
+          } else {
+            // Held in air to inspect
+            eggMesh.position.y = 0.50;
+            const moveDelta = Math.hypot(screenX - lastHandPos.x, screenY - lastHandPos.y);
+            if (moveDelta > 0.003) {
+              eggMesh.rotation.z -= 0.04;
+            }
           }
         }
       } else if (stage === 6) {
@@ -3983,23 +4007,17 @@
         }
       }
 
-      // Stage 4: Waving across egg to coat clay & Pinch-drag to rotate
+      // Stage 4: Pinch-drag to rotate egg (No bare-hand auto-coating)
       else if (stage === 4) {
         if (pinching && moveDist > 18 && now - lastActionTime > 250) {
           lastActionTime = now;
           rotateEgg360();
-        } else if (!pinching && moveDist > 15 && now - lastActionTime > 220) {
-          lastActionTime = now;
-          actionCoatClay();
         }
       }
 
-      // Stage 5: Waving left-right across black husk tray
+      // Stage 5: Must grab egg and bring to husk tray (No bare-hand auto-roll)
       else if (stage === 5) {
-        if (moveDist > 14 && now - lastActionTime > 200) {
-          lastActionTime = now;
-          actionRollInHusk();
-        }
+        // Handled via updateGrabbedEggPosition when egg is grabbed
       }
     }
 

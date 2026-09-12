@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>AR-EGG-GO : พร้อม ลุย ทำไข่เค็มดินสอพอง</title>
   <link rel="icon" type="image/jpeg" href="assets/logo.jpg">
   <link rel="apple-touch-icon" href="assets/logo.jpg">
@@ -62,6 +62,12 @@
       width: 100%;
       height: 100%;
       z-index: 1;
+      touch-action: none;
+      -webkit-touch-callout: none;
+    }
+    #webgl-container canvas {
+      touch-action: none;
+      display: block;
     }
 
     #ui-layer {
@@ -87,6 +93,9 @@
       justify-content: space-between;
       align-items: center;
       padding: 10px 18px;
+      padding-top: max(10px, env(safe-area-inset-top));
+      padding-left: max(18px, env(safe-area-inset-left));
+      padding-right: max(18px, env(safe-area-inset-right));
       background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
       color: white;
       position: relative;
@@ -304,8 +313,8 @@
       display: none !important;
     }
 
-    /* Responsive adjustments for mobile screens */
-    @media (max-width: 860px) {
+    /* Responsive adjustments for narrow portrait screens */
+    @media (max-width: 860px) and (orientation: portrait) {
       .top-bar {
         flex-wrap: wrap;
         row-gap: 8px;
@@ -402,10 +411,10 @@
     /* Floating Stage Navigation Bar (Option B) */
     .stage-nav-bar {
       position: absolute;
-      bottom: 18px;
+      bottom: max(16px, env(safe-area-inset-bottom));
       left: 0;
       width: 100%;
-      padding: 0 22px;
+      padding: 0 max(22px, env(safe-area-inset-right)) 0 max(22px, env(safe-area-inset-left));
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -802,8 +811,8 @@
     /* Dedicated Floating AR Button for Resetting Scoop in Stage 3 */
     .btn-ar-floating-reset {
       position: fixed;
-      bottom: 24px;
-      right: 24px;
+      bottom: max(20px, env(safe-area-inset-bottom));
+      right: max(20px, env(safe-area-inset-right));
       z-index: 999;
       display: none;
       align-items: center;
@@ -1851,12 +1860,332 @@
         page-break-after: auto;
       }
     }
+  
+    /* ==========================================================
+       MOBILE LANDSCAPE (SHORT VIEWPORT HEIGHT) OPTIMIZATION
+       ========================================================== */
+    @media (max-height: 520px) and (orientation: landscape) {
+      .top-bar {
+        padding: 4px 12px !important;
+        padding-top: max(4px, env(safe-area-inset-top)) !important;
+        padding-left: max(12px, env(safe-area-inset-left)) !important;
+        padding-right: max(12px, env(safe-area-inset-right)) !important;
+        flex-wrap: nowrap !important;
+      }
+      .stage-center-wrapper {
+        position: absolute !important;
+        left: 50% !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: auto !important;
+        margin-top: 0 !important;
+      }
+      .stage-center-banner {
+        padding: 3px 12px !important;
+        gap: 6px !important;
+        border-radius: 30px !important;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.18) !important;
+      }
+      .stage-banner-icon {
+        font-size: 17px !important;
+      }
+      .stage-banner-title {
+        font-size: 13px !important;
+      }
+      .stage-speech-btn {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 13px !important;
+      }
+      .game-badge {
+        padding: 3px 10px !important;
+        font-size: 12px !important;
+        gap: 5px !important;
+      }
+      .top-controls {
+        gap: 5px !important;
+      }
+      .icon-btn {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 14px !important;
+      }
+      .top-mission-panel {
+        padding: 2px 10px !important;
+        margin-top: 1px !important;
+      }
+      .action-card {
+        padding: 4px 12px !important;
+        min-width: 260px !important;
+        max-width: 92vw !important;
+        border-radius: 14px !important;
+      }
+      #card-action-title {
+        font-size: 14px !important;
+      }
+      #card-action-desc {
+        font-size: 11px !important;
+        margin: 1px 0 !important;
+      }
+      .step-card-grid {
+        grid-template-columns: 1.35fr 1fr !important;
+        gap: 8px !important;
+      }
+      .step-guide-header {
+        margin-bottom: 2px !important;
+      }
+      .step-guide-title {
+        font-size: 12.5px !important;
+      }
+      .step-guide-howto {
+        font-size: 11px !important;
+        margin-bottom: 3px !important;
+        line-height: 1.25 !important;
+      }
+      .step-wisdom-box-side {
+        padding: 4px 8px !important;
+        font-size: 10.5px !important;
+        line-height: 1.3 !important;
+      }
+      .step-wisdom-box-side .step-wisdom-icon {
+        font-size: 13px !important;
+      }
+      .stage3-glass-card {
+        padding: 4px 10px !important;
+      }
+      .s3-recipe-capsule {
+        gap: 4px !important;
+      }
+      .s3-pill {
+        padding: 2px 7px !important;
+        font-size: 11px !important;
+        border-radius: 8px !important;
+      }
+      .stage-nav-bar {
+        bottom: max(6px, env(safe-area-inset-bottom)) !important;
+        padding: 0 max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left)) !important;
+      }
+      .stage-nav-btn {
+        padding: 4px 10px !important;
+        font-size: 11.5px !important;
+        border-radius: 10px !important;
+        gap: 5px !important;
+      }
+      .btn-ar-floating-reset {
+        bottom: max(6px, env(safe-area-inset-bottom)) !important;
+        right: max(10px, env(safe-area-inset-right)) !important;
+        padding: 5px 12px !important;
+        font-size: 11.5px !important;
+        gap: 5px !important;
+      }
+
+      /* Stage 7 Quiz on Short Landscape Screens */
+      .action-card.bonus-quiz-stage {
+        padding: 6px 12px !important;
+        gap: 8px !important;
+        justify-content: flex-start !important;
+      }
+      .bonus-question-card {
+        padding: 8px 16px !important;
+        border-radius: 16px !important;
+      }
+      .bonus-quiz-header {
+        margin-bottom: 3px !important;
+        padding-bottom: 3px !important;
+      }
+      .bonus-badge-title {
+        font-size: 12px !important;
+        padding: 2px 10px !important;
+      }
+      .bonus-step-indicator {
+        font-size: 12px !important;
+        padding: 2px 10px !important;
+      }
+      .bonus-mascot-strip {
+        display: none !important;
+      }
+      .bonus-question-text {
+        font-size: 16px !important;
+        margin: 2px 0 2px !important;
+      }
+      .bonus-question-hint {
+        font-size: 12px !important;
+        margin-bottom: 3px !important;
+      }
+      .bonus-point-guide {
+        font-size: 11.5px !important;
+        padding: 2px 10px !important;
+      }
+      .bonus-answers-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 8px !important;
+        width: 98% !important;
+      }
+      .standalone-choice-card {
+        padding: 8px 8px 6px !important;
+        border-radius: 12px !important;
+      }
+      .standalone-badge {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 14px !important;
+        margin-bottom: 2px !important;
+        border-radius: 8px !important;
+      }
+      .standalone-title {
+        font-size: 15.5px !important;
+        margin-bottom: 2px !important;
+      }
+      .standalone-desc {
+        font-size: 11px !important;
+        min-height: 22px !important;
+        margin-bottom: 3px !important;
+        line-height: 1.25 !important;
+      }
+      .standalone-action {
+        font-size: 11px !important;
+        padding: 2px 8px !important;
+      }
+
+      /* Modals on Short Landscape Screens */
+      .modal-box {
+        padding: 10px 16px !important;
+        max-height: 94vh !important;
+        border-radius: 16px !important;
+        overflow-y: auto !important;
+      }
+      .app-brand-logo {
+        width: 44px !important;
+        height: 44px !important;
+        margin: 0 auto 3px !important;
+        border-radius: 12px !important;
+      }
+      .modal-title {
+        font-size: 18px !important;
+        margin-bottom: 1px !important;
+      }
+      .modal-desc {
+        font-size: 11px !important;
+        margin-bottom: 5px !important;
+      }
+      .btn {
+        padding: 8px 16px !important;
+        font-size: 13px !important;
+      }
+    }
+
+    /* ==========================================================
+       IPAD & TABLET SPECIFIC OPTIMIZATIONS (768px to 1200px)
+       ========================================================== */
+    @media (min-width: 768px) and (max-width: 1200px) {
+      .icon-btn {
+        width: 46px;
+        height: 46px;
+        font-size: 21px;
+      }
+      .stage-speech-btn {
+        width: 42px;
+        height: 42px;
+        font-size: 20px;
+      }
+      .stage-banner-title {
+        font-size: 18px;
+      }
+      .action-card {
+        padding: 10px 22px;
+        max-width: 750px;
+      }
+      .s3-pill {
+        padding: 7px 16px;
+        font-size: 14.5px;
+      }
+      .stage-nav-btn {
+        padding: 12px 22px;
+        font-size: 15px;
+      }
+      .bonus-answers-grid {
+        gap: 20px;
+      }
+      .standalone-choice-card {
+        padding: 22px 18px;
+      }
+    }
+
+    /* ==========================================================
+       MOBILE PORTRAIT ORIENTATION PROMPT OVERLAY
+       ========================================================== */
+    .landscape-prompt-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 99999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 767px) and (orientation: portrait) {
+      .landscape-prompt-overlay:not(.dismissed) {
+        display: flex !important;
+      }
+    }
+
+    .landscape-prompt-card {
+      background: #ffffff;
+      border-radius: 26px;
+      padding: 26px 22px;
+      max-width: 330px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
+      animation: popIn 0.35s ease-out;
+      border: 2px solid rgba(2, 132, 199, 0.2);
+    }
+
+    .rotate-phone-anim {
+      animation: rotatePhone 2.6s infinite ease-in-out;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+
+    @keyframes rotatePhone {
+      0%, 15% { transform: rotate(0deg); }
+      45%, 75% { transform: rotate(-90deg); }
+      90%, 100% { transform: rotate(0deg); }
+    }
+
   </style>
 </head>
 <body>
+  <!-- Mobile Landscape Rotation Prompt Overlay -->
+  <div id="landscape-prompt-overlay" class="landscape-prompt-overlay">
+    <div class="landscape-prompt-card">
+      <div class="rotate-phone-anim">
+        <svg width="68" height="68" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="20" y="8" width="24" height="48" rx="5" stroke="#0284c7" stroke-width="3.2" fill="rgba(2, 132, 199, 0.08)"/>
+          <line x1="28" y1="50" x2="36" y2="50" stroke="#0284c7" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="32" cy="14" r="1.5" fill="#0284c7"/>
+          <path d="M48 24 C54 30 54 36 48 42" stroke="#f59e0b" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+          <path d="M52 22 L48 24 L50 28" stroke="#f59e0b" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
+      <h3 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 4px 0 6px;">กรุณาหมุนหน้าจอเป็นแนวนอน</h3>
+      <p style="font-size: 13px; color: #475569; margin-bottom: 16px; line-height: 1.45;">เพื่อประสบการณ์การเล่นเกม AR และ 3D ที่คมชัดและเต็มตาที่สุด แนะนำให้หมุนอุปกรณ์เป็นแนวนอนครับ</p>
+      <button type="button" class="btn btn-secondary" onclick="dismissLandscapePrompt()" style="font-size: 12.5px; padding: 7px 18px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        เล่นในแนวตั้งต่อ
+      </button>
+    </div>
+  </div>
   <!-- Real Camera Feed for AR -->
   <!-- Real Camera Feed for AR (Mirrored for Laptop Webcam with Semi-transparent Background) -->
-  <video id="camera-feed" autoplay playsinline muted style="position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;transform:scaleX(-1);opacity:0.48;display:none;pointer-events:none;filter:brightness(0.98) contrast(1.05);"></video>
+  <video id="camera-feed" autoplay playsinline webkit-playsinline muted style="position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;transform:scaleX(-1);opacity:0.48;display:none;pointer-events:none;filter:brightness(0.98) contrast(1.05);"></video>
 
   <!-- Hand Tracking Visual Overlay Canvas -->
   <canvas id="hand-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:4;pointer-events:none;"></canvas>
@@ -3255,6 +3584,18 @@
         stage1Eggs.push(mesh);
       });
     }
+
+    
+    function dismissLandscapePrompt() {
+      const el = document.getElementById('landscape-prompt-overlay');
+      if (el) el.classList.add('dismissed');
+    }
+
+    // Support screen orientation changes smoothly for mobile and iPad
+    window.addEventListener('orientationchange', () => {
+      setTimeout(onWindowResize, 100);
+      setTimeout(onWindowResize, 300);
+    });
 
     function onWindowResize() {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -6504,7 +6845,7 @@
         });
 
         window.addEventListener('pointermove', (e) => {
-          if (isPointerDragging && isEggGrabbed) {
+          if (isPointerDragging && (isEggGrabbed || isIngredientGrabbed)) {
             const rect = renderer.domElement.getBoundingClientRect();
             const screenX = e.clientX - rect.left;
             const screenY = e.clientY - rect.top;

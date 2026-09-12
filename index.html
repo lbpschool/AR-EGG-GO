@@ -2859,6 +2859,7 @@
         GAME_STATE.stage6.placed = true;
         GAME_STATE.stage6.done = true;
       }
+      isEggGrabbed = false;
       GAME_STATE.scores.stage6 = 10;
       updateScoreDisplay();
 
@@ -2869,13 +2870,16 @@
       showToast('📦 บรรจุไข่เค็มลงภาชนะเรียบร้อยแล้ว! (ไปขั้นตอนต่อไปใน 3 วินาที)', 3000);
       setMascot('ยอดเยี่ยมมาก! บรรจุไข่เค็มลงกล่องเรียบร้อย พร้อมสำหรับขั้นตอนการหมักแล้วจ้า', 'celebrate');
 
-      // Switch carton texture from empty to packed with black husk eggs
+      // 1. Hide the floating dragged egg immediately so no giant black blob appears!
+      if (eggMesh) {
+        eggMesh.visible = false;
+        eggMesh.position.set(0.55, 0.48, 0.05);
+      }
+
+      // 2. Switch carton texture from empty to packed with black husk eggs
       if (cartonPlane && realTextures['egg_carton_packed']) {
         cartonPlane.material.map = realTextures['egg_carton_packed'];
         cartonPlane.material.needsUpdate = true;
-      }
-      if (eggMesh) {
-        eggMesh.visible = false;
       }
       if (eggCartonMesh) {
         eggCartonMesh.scale.set(0.92, 0.92, 0.92);
@@ -3651,8 +3655,7 @@
 
           // Dragging towards carton on the left (-0.70, 0.22, 0.05)
           const distToCarton = Math.hypot(eggMesh.position.x - (-0.70), eggMesh.position.z - 0.05);
-          if ((distToCarton < 0.65 || eggMesh.position.x < -0.30) && now - lastActionTime > 400) {
-            lastActionTime = now;
+          if (distToCarton < 0.70 || eggMesh.position.x < -0.15) {
             actionPackEgg();
           } else {
             eggMesh.position.y = 0.50;
@@ -3705,8 +3708,11 @@
         } else if (stage === 5) {
           eggMesh.position.y = 0.35;
         } else if (stage === 6) {
-          if (Math.hypot(eggMesh.position.x, eggMesh.position.z) < 0.5) {
-            eggMesh.position.set(0, 0.32, 0);
+          const distToCarton = Math.hypot(eggMesh.position.x - (-0.70), eggMesh.position.z - 0.05);
+          if (distToCarton < 0.80 || eggMesh.position.x < 0.10) {
+            actionPackEgg();
+          } else {
+            eggMesh.position.set(0.55, 0.48, 0.05);
           }
         }
       }

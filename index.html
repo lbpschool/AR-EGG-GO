@@ -137,12 +137,12 @@
     }
 
     .action-card {
-      background: rgba(255, 255, 255, 0.94);
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
-      width: 100%;
-      max-width: 640px;
-      padding: 10px 18px;
+      width: 95%;
+      max-width: 860px;
+      padding: 8px 16px;
       border-radius: var(--border-radius);
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
       border: 1.5px solid rgba(255, 255, 255, 0.85);
@@ -292,14 +292,14 @@
 
     /* Stage 2 Glassmorphism Status HUD */
     .stage2-glass-card {
-      background: rgba(255, 255, 255, 0.65) !important;
+      background: rgba(255, 255, 255, 0.75) !important;
       backdrop-filter: blur(18px) !important;
       -webkit-backdrop-filter: blur(18px) !important;
       border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
       border-radius: 20px !important;
       box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
-      max-width: 600px !important;
-      padding: 10px 20px !important;
+      max-width: 860px !important;
+      padding: 8px 16px !important;
       margin: 0 auto;
     }
 
@@ -402,18 +402,18 @@
 
     /* Stage 4/5/6 Glassmorphism Status HUD */
     .stage4-glass-card {
-      background: rgba(255, 255, 255, 0.72) !important;
+      background: rgba(255, 255, 255, 0.75) !important;
       backdrop-filter: blur(18px) !important;
       -webkit-backdrop-filter: blur(18px) !important;
       border: 1.5px solid rgba(255, 255, 255, 0.90) !important;
       border-radius: 20px !important;
       box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
-      max-width: 600px !important;
-      padding: 12px 24px !important;
+      max-width: 860px !important;
+      padding: 8px 16px !important;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 6px;
     }
 
     .s4-glass-meter-container {
@@ -482,13 +482,13 @@
     }
 
 .stage3-glass-card {
-      background: rgba(255, 255, 255, 0.70) !important;
+      background: rgba(255, 255, 255, 0.75) !important;
       backdrop-filter: blur(18px) !important;
       -webkit-backdrop-filter: blur(18px) !important;
       border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
       border-radius: 20px !important;
       box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
-      max-width: 600px !important;
+      max-width: 860px !important;
       padding: 8px 16px !important;
       margin: 0 auto;
     }
@@ -1380,6 +1380,57 @@
     /* ==========================================================
        STEP GUIDANCE, WISDOM BOX & RECIPE GUIDEBOOK STYLING
        ========================================================== */
+    /* 2-Column Side-by-Side Layout: Controls on Left, Wisdom Box on Right */
+    .step-card-grid {
+      display: grid;
+      grid-template-columns: 1.32fr 1fr;
+      gap: 14px;
+      align-items: stretch;
+      text-align: left;
+      width: 100%;
+    }
+    .step-card-main-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 5px;
+      min-width: 0;
+    }
+    .step-card-wisdom-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+    }
+    .step-wisdom-box-side {
+      background: linear-gradient(135deg, #fefce8 0%, #fffbeb 100%);
+      border: 1.5px solid #fef08a;
+      border-left: 4px solid #f59e0b;
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #78350f;
+      line-height: 1.45;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.08);
+      height: 100%;
+      box-sizing: border-box;
+    }
+    .step-wisdom-box-side .step-wisdom-icon {
+      font-size: 16px;
+      line-height: 1.2;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    @media (max-width: 768px) {
+      .step-card-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+    }
+
     .step-guide-card {
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(12px);
@@ -2130,9 +2181,9 @@
         number: 1,
         title: 'ขั้นตอนที่ 1 การคัดเลือกไข่เป็ด',
         icon: '🥚',
-        howTo: 'สังเกตและเลือกไข่เป็ดสดใหม่ เปลือกหนา ผิวเนียนสะอาด ไม่มีรอยแตกร้าว (เลือก 3 ใน 5 ฟอง)',
+        howTo: 'สังเกตและเลือกไข่เป็ดสดใหม่ เปลือกหนาสะอาด ไม่มีรอยแตกร้าว (เลือก 3 ใน 5 ฟอง)',
         wisdom: 'เปลือกไข่มีรูพรุนขนาดเล็กมาก หากมีรอยแตกร้าวแม้เพียงนิดเดียว เชื้อโรคจะแทรกซึมเข้าไป และเกลือจะเค็มเกินจนไข่เน่าเสีย',
-        speechText: 'ขั้นตอนที่ 1 การคัดเลือกไข่เป็ด ให้สังเกตและเลือกไข่เป็ดที่สดใหม่ เปลือกเนียน สะอาด ไม่มีรอยแตกร้าว เพราะรอยร้าวจะทำให้เชื้อโรคเข้าไปและไข่เน่าเสียได้ครับ'
+        speechText: 'ขั้นตอนที่ 1 , การคัดเลือกไข่เป็ดนะคะ , ให้สังเกตและเลือกไข่เป็ดที่สดใหม่ , เปลือกหนาสะอาด , ไม่มีรอยแตกร้าวค่ะ , เพราะรอยแตกร้าวเพียงนิดเดียว , จะทำให้เชื้อโรคแทรกซึมเข้าไป , และทำให้ไข่เน่าเสียได้ค่ะ'
       },
       2: {
         number: 2,
@@ -2140,15 +2191,15 @@
         icon: '💧',
         howTo: 'ขัดล้างคราบสกปรกในอ่างน้ำจนสะอาด 100% แล้วนำมาเช็ดบนผ้าสะอาดให้แห้งสนิท 100%',
         wisdom: '⚠️ สำคัญมาก: เปลือกไข่ต้องแห้งสนิท 100% ก่อนนำไปพอก หากมีความชื้นตกค้างจะเกิดเชื้อราและไข่จะเน่าเสียในระหว่างการหมัก',
-        speechText: 'ขั้นตอนที่ 2 การล้างและเช็ดให้แห้ง นำไข่มาล้างทำความสะอาดในอ่างน้ำ และต้องเช็ดให้แห้งสนิท 100% เพื่อป้องกันไม่ให้เกิดเชื้อราในระหว่างการหมักครับ'
+        speechText: 'ขั้นตอนที่ 2 , การล้างและเช็ดให้แห้งค่ะ , นำไข่เป็ดมาขัดล้างคราบสกปรกในอ่างน้ำจนสะอาด , จากนั้นนำมาเช็ดบนผ้าสะอาดให้แห้งสนิท 100% นะคะ , เปลือกไข่ต้องแห้งสนิทจริง ๆ ค่ะ , เพื่อป้องกันไม่ให้เกิดเชื้อราในระหว่างการหมักค่ะ'
       },
       3: {
         number: 3,
         title: 'ขั้นตอนที่ 3 การผสมดินสอพองตามสูตร',
         icon: '🥣',
-        howTo: 'ตวงดินสอพอง 3 ส่วน, เกลือป่น 1 ส่วน, และน้ำสะอาด 1 ส่วน ลงกะละมัง แล้ววนนวดผสมให้เนียนเข้ากัน 10 รอบ',
+        howTo: 'ตวงดินสอพอง 3 ส่วน, เกลือป่น 1 ส่วน, และน้ำสะอาด 1 ส่วน ลงกะละมัง แล้ววนนวดผสมให้เนียน 10 รอบ',
         wisdom: 'ดินสอพองเนื้อละเอียดช่วยอุ้มน้ำเกลือ และควบคุมให้อนุภาคความเค็มค่อยๆ ซึมผ่านเปลือกไข่อย่างสม่ำเสมอ ทำให้ไข่แดงมันเยิ้ม ไม่แข็งกระด้าง',
-        speechText: 'ขั้นตอนที่ 3 การผสมดินสอพองตามสูตร ตวงดินสอพอง 3 ส่วน เกลือ 1 ส่วน และน้ำ 1 ส่วน แล้วนวดผสมให้เข้ากันจนเนียนละเอียดครับ'
+        speechText: 'ขั้นตอนที่ 3 , การผสมดินสอพองตามสูตรค่ะ , ตวงดินสอพอง 3 ส่วน , เกลือป่น 1 ส่วน , และน้ำสะอาด 1 ส่วน ลงในกะละมังนะคะ , จากนั้นวนนวดผสมให้เนียนเข้ากัน 10 รอบค่ะ , ดินสอพองจะช่วยอุ้มน้ำเกลือ , และทำให้ไข่แดงมันเยิ้มสวยงามค่ะ'
       },
       4: {
         number: 4,
@@ -2156,7 +2207,7 @@
         icon: '✨',
         howTo: 'นำไข่ที่แห้งสนิทมาพอกด้วยดินสอพองที่ผสมไว้ ให้หนาสม่ำเสมอทั่วทั้งฟองรอบด้าน 360 องศา',
         wisdom: 'หากพอกไม่ทั่วถึง หรือพอกบางเกินไป เกลือจะซึมเข้าเนื้อไข่ไม่เท่ากัน ทำให้ไข่เค็มเฉพาะบางจุด',
-        speechText: 'ขั้นตอนที่ 4 การพอกไข่ด้วยดินสอพอง ปาดเคลือบดินสอพองรอบฟองไข่ให้หนาสม่ำเสมอทั่วทั้งฟอง 360 องศา เพื่อให้เกลือซึมซาบเท่ากันครับ'
+        speechText: 'ขั้นตอนที่ 4 , การพอกไข่ด้วยดินสอพองค่ะ , นำไข่ที่แห้งสนิทมาพอกด้วยดินสอพองที่ผสมไว้ , ให้หนาสม่ำเสมอทั่วทั้งฟองรอบด้าน 360 องศานะคะ , เพื่อให้ความเค็มซึมเข้าเนื้อไข่อย่างทั่วถึงค่ะ'
       },
       5: {
         number: 5,
@@ -2164,7 +2215,7 @@
         icon: '🌾',
         howTo: 'นำไข่ที่พอกดินสอพองแล้ว มากลิ้งคลุกในถาดแกลบดำให้เคลือบติดรอบฟองไข่จนครบ 100%',
         wisdom: 'แกลบดำมีประโยชน์ 3 ประการ: 1) ป้องกันไข่ติดกัน 2) ช่วยดูดซับความชื้นส่วนเกิน 3) ช่วยรักษาอุณหภูมิให้คงที่ระหว่างการหมัก',
-        speechText: 'ขั้นตอนที่ 5 การคลุกแกลบดำ นำไข่ที่พอกแล้วมากลิ้งคลุกแกลบดำให้ทั่ว เพื่อไม่ให้ไข่ติดกัน และช่วยรักษาความชื้นระหว่างการหมักครับ'
+        speechText: 'ขั้นตอนที่ 5 , การคลุกแกลบดำค่ะ , นำไข่ที่พอกดินสอพองแล้ว , มากลิ้งคลุกในถาดแกลบดำให้ทั่วทั้งฟอง 100% นะคะ , แกลบดำจะช่วยไม่ให้ไข่ติดกัน , และช่วยรักษาความชื้นระหว่างการหมักค่ะ'
       },
       6: {
         number: 6,
@@ -2172,7 +2223,7 @@
         icon: '📦',
         howTo: 'วางบรรจุไข่ลงในกล่องอย่างเบามือ จัดเก็บในที่ร่ม อากาศถ่ายเท ไม่โดนแดด และไม่ต้องแช่ตู้เย็น',
         wisdom: 'ควรระบุวันที่ผลิตไว้เสมอ จัดเก็บในอุณหภูมิห้อง ไม่โดนแดด และห้ามแช่ตู้เย็นเด็ดขาดระหว่างการหมัก',
-        speechText: 'ขั้นตอนที่ 6 การบรรจุไข่ลงในกล่อง วางไข่ลงในกล่องอย่างเบามือ จัดเก็บในที่แห้ง อากาศถ่ายเทสะดวก และไม่ต้องแช่ตู้เย็นครับ'
+        speechText: 'ขั้นตอนที่ 6 , การบรรจุไข่ลงในกล่องค่ะ , วางบรรจุไข่ลงในกล่องอย่างเบามือนะคะ , จัดเก็บในที่ร่ม , อากาศถ่ายเทสะดวก , และห้ามแช่ตู้เย็นเด็ดขาดในระหว่างการหมักค่ะ'
       },
       7: {
         number: 7,
@@ -2180,7 +2231,7 @@
         icon: '⏱️',
         howTo: 'ทดสอบความรู้ระยะเวลาหมัก: ทำไข่ดาวเค็มหมัก 7-10 วัน / ทำไข่เค็มต้มหมัก 10-14 วันขึ้นไป',
         wisdom: 'หมัก 7-10 วัน ไข่แดงจะเยิ้มมันสวย เหมาะทำไข่ดาวเค็ม / หมัก 10-14 วัน ไข่แดงจะแข็งขึ้นทราย รสเค็มเข้าเนื้อ เหมาะต้มรับประทาน',
-        speechText: 'ขั้นตอนที่ 7 ระยะเวลาการหมักไข่ สำหรับทอดไข่ดาวเค็มใช้เวลาหมัก 7 ถึง 10 วัน ส่วนไข่เค็มต้มใช้เวลา 10 ถึง 14 วันขึ้นไปครับ'
+        speechText: 'ขั้นตอนที่ 7 , ระยะเวลาการหมักไข่นะคะ , ถ้าต้องการทำไข่ดาวเค็ม , ให้หมัก 7 ถึง 10 วันค่ะ , แต่ถ้าต้องการทำไข่เค็มต้ม , ให้หมัก 10 ถึง 14 วันขึ้นไปนะคะ , ไข่แดงจะมันเยิ้มขึ้นทรายอร่อยมากค่ะ'
       }
     };
 
@@ -2198,7 +2249,28 @@
           try {
             const voices = this.synth.getVoices();
             if (voices && voices.length) {
-              this.thaiVoice = voices.find(v => v.lang === 'th-TH' || v.lang.startsWith('th')) || null;
+              const thaiVoices = voices.filter(v => v.lang === 'th-TH' || v.lang.startsWith('th') || (v.lang && v.lang.includes('th')));
+              
+              // 1. Prioritize natural female Thai voices (Premwadee, Achara, Kanya, Narisa, Siri, Google Thai)
+              const femaleMatch = thaiVoices.find(v => {
+                const name = (v.name || '').toLowerCase();
+                return name.includes('premwadee') || 
+                       name.includes('achara') || 
+                       name.includes('kanya') || 
+                       name.includes('narisa') || 
+                       name.includes('siri') || 
+                       name.includes('female') || 
+                       name.includes('หญิง') ||
+                       (name.includes('google') && !name.includes('male'));
+              });
+
+              // 2. Secondary: Any Thai voice not explicitly named male
+              const nonMaleMatch = thaiVoices.find(v => {
+                const name = (v.name || '').toLowerCase();
+                return !name.includes('pattara') && !name.includes('male') && !name.includes('ชาย') && !name.includes('david');
+              });
+
+              this.thaiVoice = femaleMatch || nonMaleMatch || thaiVoices[0] || null;
             }
           } catch(e) {}
         };
@@ -2224,8 +2296,9 @@
         try {
           const utterance = new SpeechSynthesisUtterance(textToSpeak);
           utterance.lang = 'th-TH';
-          utterance.rate = 0.95;
-          utterance.pitch = 1.0;
+          // Natural sweet female cadence
+          utterance.rate = 0.92;
+          utterance.pitch = 1.18;
           if (this.thaiVoice) {
             utterance.voice = this.thaiVoice;
           }
@@ -2287,27 +2360,38 @@
       }
     };
 
-    function getStepGuideCardHTML(stageNum) {
+    function renderStepCardHTML(stageNum, interactionHTML) {
       const step = STAGE_STEP_DATA[stageNum];
-      if (!step) return '';
+      if (!step) return interactionHTML;
+
       return `
-        <div class="step-guide-card">
-          <div class="step-guide-header">
-            <div class="step-guide-title">
-              <span style="font-size: 18px;">${step.icon}</span>
-              <span>${step.title}</span>
+        <div class="step-card-grid">
+          <!-- Left Column: Title, Speech Button, How-To, and Stage Controls -->
+          <div class="step-card-main-col">
+            <div class="step-guide-header">
+              <div class="step-guide-title">
+                <span style="font-size: 17px;">${step.icon}</span>
+                <span>${step.title}</span>
+              </div>
+              <button type="button" class="btn-speech-trigger" id="btn-speech-stage-${stageNum}" onclick="Narrator.toggle(STAGE_STEP_DATA[${stageNum}].speechText, this)" title="คลิกเพื่อฟังเสียงบรรยายขั้นตอน">
+                <span>🔊</span>
+                <span>ฟังเสียงบรรยาย</span>
+              </button>
             </div>
-            <button type="button" class="btn-speech-trigger" id="btn-speech-stage-${stageNum}" onclick="Narrator.toggle(STAGE_STEP_DATA[${stageNum}].speechText, this)" title="คลิกเพื่อฟังเสียงบรรยายขั้นตอน">
-              <span>🔊</span>
-              <span>ฟังเสียงบรรยาย</span>
-            </button>
+            <div class="step-guide-howto">
+              <b>วิธีปฏิบัติ:</b> ${step.howTo}
+            </div>
+            <div class="step-guide-interaction">
+              ${interactionHTML}
+            </div>
           </div>
-          <div class="step-guide-howto">
-            <b>วิธีปฏิบัติ:</b> ${step.howTo}
-          </div>
-          <div class="step-wisdom-box">
-            <span class="step-wisdom-icon">💡</span>
-            <div><b>เกร็ดความรู้/ข้อควรระวัง:</b> ${step.wisdom}</div>
+
+          <!-- Right Column: Wisdom Box on the right side to prevent blocking 3D view -->
+          <div class="step-card-wisdom-col">
+            <div class="step-wisdom-box-side">
+              <span class="step-wisdom-icon">💡</span>
+              <div><b>เกร็ดความรู้/ข้อควรระวัง:</b> ${step.wisdom}</div>
+            </div>
           </div>
         </div>
       `;
@@ -2982,17 +3066,12 @@
           controls.target.set(0, 0.35, 0);
 
           actionCard.className = 'action-card';
-          actionCard.innerHTML = `
-            ${getStepGuideCardHTML(1)}
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 8px;">
-              <div style="text-align: left;">
-                <p style="margin: 0; font-size: 13px; color: #4b5563;">👉 <b>ชี้นิ้วค้างไว้ที่ไข่ 1 วินาที</b> เพื่อเลือกฟองที่สมบูรณ์ (หรือคลิกเลือก)</p>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span id="s1-egg-counter" class="badge-pill" style="font-size: 14px; padding: 6px 14px; font-weight: 700; background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe;">คัดเลือกได้แล้ว: 0 / 3 ฟอง</span>
-              </div>
+          actionCard.innerHTML = renderStepCardHTML(1, `
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+              <p style="margin: 0; font-size: 12.5px; color: #4b5563;">👉 <b>ชี้นิ้วค้างไว้ที่ไข่ 1 วินาที</b> เพื่อเลือกฟองที่สมบูรณ์ (หรือคลิกเลือก)</p>
+              <span id="s1-egg-counter" class="badge-pill" style="font-size: 13px; padding: 4px 12px; font-weight: 700; background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe;">คัดเลือกได้แล้ว: 0 / 3 ฟอง</span>
             </div>
-          `;
+          `);
           break;
 
         case 2:
@@ -3015,9 +3094,8 @@
           controls.target.set(0, 0.15, 0);
 
           actionCard.className = 'action-card stage2-glass-card';
-          actionCard.innerHTML = `
-            ${getStepGuideCardHTML(2)}
-            <div class="s2-glass-meter-container" style="margin-top: 8px;">
+          actionCard.innerHTML = renderStepCardHTML(2, `
+            <div class="s2-glass-meter-container">
               <!-- Cleanliness Meter -->
               <div class="s2-glass-meter-item">
                 <div class="s2-meter-header">
@@ -3046,7 +3124,7 @@
                 </div>
               </div>
             </div>
-          `;
+          `);
           break;
 
         case 3:
@@ -3083,11 +3161,10 @@
 
           actionCard.className = 'action-card stage3-glass-card';
           const isRecipeReady = GAME_STATE.stage3.dinSorPhong === 3 && GAME_STATE.stage3.salt === 1 && GAME_STATE.stage3.water === 1;
-          actionCard.innerHTML = `
-            ${getStepGuideCardHTML(3)}
-            <div class="s3-glass-container" style="margin-top: 8px;">
+          actionCard.innerHTML = renderStepCardHTML(3, `
+            <div class="s3-glass-container">
               <div class="s3-recipe-capsule">
-                <span style="font-size: 13px; font-weight: 700; color: #1f2937;">สูตรผสม:</span>
+                <span style="font-size: 12.5px; font-weight: 700; color: #1f2937;">สูตรผสม:</span>
                 <div id="pill-din" class="s3-pill ${GAME_STATE.stage3.dinSorPhong === 3 ? 'done' : 'active-din'}" onclick="addIngredient('din')" title="หยิบดินสอพองไปเท หรือคลิกเพื่อตักเพิ่ม">
                   <span>⚪ ดินสอพอง</span>
                   <span class="s3-pill-count" id="count-din">${GAME_STATE.stage3.dinSorPhong} / 3</span>
@@ -3114,7 +3191,7 @@
                 </button>
               </div>
             </div>
-          `;
+          `);
           break;
 
         case 4:
@@ -3147,21 +3224,22 @@
           camera.lookAt(0, 0.38, 0);
 
           actionCard.className = 'action-card stage4-glass-card';
-          actionCard.innerHTML = `
-            ${getStepGuideCardHTML(4)}
-            <div class="s4-glass-meter-container" style="margin-top: 8px;">
-              <div class="s4-meter-header">
-                <span class="s4-meter-title">✨ ความครอบคลุมการพอก:</span>
-                <span class="s4-meter-val" id="s4-cover-val">${GAME_STATE.stage4.coveredPercent}%</span>
+          actionCard.innerHTML = renderStepCardHTML(4, `
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <div class="s4-glass-meter-container" style="flex: 1;">
+                <div class="s4-meter-header">
+                  <span class="s4-meter-title">✨ ความครอบคลุมการพอก:</span>
+                  <span class="s4-meter-val" id="s4-cover-val">${GAME_STATE.stage4.coveredPercent}%</span>
+                </div>
+                <div class="s4-meter-track">
+                  <div id="s4-cover-progress" class="s4-meter-fill" style="width: ${GAME_STATE.stage4.coveredPercent}%;"></div>
+                </div>
               </div>
-              <div class="s4-meter-track">
-                <div id="s4-cover-progress" class="s4-meter-fill" style="width: ${GAME_STATE.stage4.coveredPercent}%;"></div>
-              </div>
+              <button id="btn-s4-next" class="s4-next-btn" onclick="completeStage4()" style="display: ${GAME_STATE.stage4.done ? 'block' : 'none'}; padding: 6px 14px; font-size: 13px; width: auto; white-space: nowrap;">
+                ไปขั้นตอนต่อไป ➔
+              </button>
             </div>
-            <button id="btn-s4-next" class="s4-next-btn" onclick="completeStage4()" style="display: ${GAME_STATE.stage4.done ? 'block' : 'none'}; margin-top: 6px;">
-              ไปขั้นตอนต่อไป ➔
-            </button>
-          `;
+          `);
           break;
 
         case 5:
@@ -3187,21 +3265,22 @@
           camera.lookAt(0, 0.38, 0);
 
           actionCard.className = 'action-card stage4-glass-card';
-          actionCard.innerHTML = `
-            ${getStepGuideCardHTML(5)}
-            <div class="s4-glass-meter-container" style="margin-top: 8px;">
-              <div class="s4-meter-header">
-                <span class="s4-meter-title">🌾 ความครอบคลุมแกลบดำ:</span>
-                <span class="s4-meter-val" id="s5-husk-val">${GAME_STATE.stage5.huskPercent}%</span>
+          actionCard.innerHTML = renderStepCardHTML(5, `
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <div class="s4-glass-meter-container" style="flex: 1;">
+                <div class="s4-meter-header">
+                  <span class="s4-meter-title">🌾 ความครอบคลุมแกลบดำ:</span>
+                  <span class="s4-meter-val" id="s5-husk-val">${GAME_STATE.stage5.huskPercent}%</span>
+                </div>
+                <div class="s4-meter-track">
+                  <div id="s5-husk-progress" class="s4-meter-fill" style="width: ${GAME_STATE.stage5.huskPercent}%; background: linear-gradient(90deg, #4b5563, #111827);"></div>
+                </div>
               </div>
-              <div class="s4-meter-track">
-                <div id="s5-husk-progress" class="s4-meter-fill" style="width: ${GAME_STATE.stage5.huskPercent}%; background: linear-gradient(90deg, #4b5563, #111827);"></div>
-              </div>
+              <button id="btn-s5-next" class="s4-next-btn" onclick="finishStage5()" style="display: ${GAME_STATE.stage5.done ? 'block' : 'none'}; padding: 6px 14px; font-size: 13px; width: auto; white-space: nowrap;">
+                ไปขั้นตอนต่อไป ➔
+              </button>
             </div>
-            <button id="btn-s5-next" class="s4-next-btn" onclick="finishStage5()" style="display: ${GAME_STATE.stage5.done ? 'block' : 'none'}; margin-top: 6px;">
-              ไปขั้นตอนต่อไป ➔
-            </button>
-          `;
+          `);
           break;
 
         case 6:
@@ -3231,20 +3310,19 @@
           camera.lookAt(0, 0.38, 0);
 
           actionCard.className = 'action-card stage4-glass-card';
-          actionCard.innerHTML = `
-            ${getStepGuideCardHTML(6)}
-            <div class="s4-glass-meter-container" style="margin-top: 8px;">
-              <div class="s4-meter-header">
-                <span class="s4-meter-title">📦 ภารกิจ: บรรจุไข่เค็มลงในภาชนะจัดเก็บ</span>
+          actionCard.innerHTML = renderStepCardHTML(6, `
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <span style="font-size: 13px; font-weight: 600; color: #1e293b;">📦 ภารกิจ: บรรจุไข่เค็มลงในกล่องบรรจุ</span>
+              <div style="display: flex; gap: 6px;">
+                <button id="btn-s6-pack" class="btn btn-accent" onclick="actionPackEgg()" style="font-size: 13px; padding: 6px 16px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.18);">
+                  📦 บรรจุไข่ลงกล่อง
+                </button>
+                <button id="btn-s6-next" class="s4-next-btn" onclick="finishStage6()" style="display: none; padding: 6px 14px; font-size: 13px; width: auto;">
+                  ไปขั้นตอนต่อไป ➔
+                </button>
               </div>
             </div>
-            <button id="btn-s6-pack" class="btn btn-accent" onclick="actionPackEgg()" style="margin-top: 8px; font-size: 14px; padding: 8px 20px; border-radius: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.25);">
-              📦 บรรจุไข่ลงกล่อง
-            </button>
-            <button id="btn-s6-next" class="s4-next-btn" onclick="finishStage6()" style="display: none; margin-top: 8px;">
-              ไปขั้นตอนต่อไป ➔
-            </button>
-          `;
+          `);
           break;
 
         case 7:
@@ -3257,47 +3335,48 @@
           if (currentBonusBackdrop) currentBonusBackdrop.style.display = 'block';
 
           actionCard.innerHTML = `
-            <!-- Top Standalone Question Card -->
-            <div class="bonus-question-card">
-              <div class="bonus-quiz-header">
-                <div class="bonus-badge-title">
-                  <span>⏱️</span>
-                  <span>ขั้นตอนที่ 7 : ระยะเวลาการหมักไข่</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <button type="button" class="btn-speech-trigger" id="btn-speech-stage-7" onclick="Narrator.toggle(STAGE_STEP_DATA[7].speechText, this)" title="คลิกเพื่อฟังเสียงบรรยายขั้นตอน">
-                    <span>🔊</span>
-                    <span>ฟังเสียงบรรยาย</span>
-                  </button>
-                  <div class="bonus-step-indicator" id="bonus-step-badge">
-                    คำถามข้อที่ 1 / 2
+            <!-- Top Standalone Question Card with Side-by-Side Wisdom Box -->
+            <div class="bonus-question-card" style="padding: 16px 22px;">
+              <div class="step-card-grid">
+                <!-- Left: Question Header & Details -->
+                <div class="step-card-main-col">
+                  <div class="bonus-quiz-header" style="margin-bottom: 6px; padding-bottom: 6px;">
+                    <div class="bonus-badge-title">
+                      <span>⏱️</span>
+                      <span>ขั้นตอนที่ 7 : ระยะเวลาการหมักไข่</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <button type="button" class="btn-speech-trigger" id="btn-speech-stage-7" onclick="Narrator.toggle(STAGE_STEP_DATA[7].speechText, this)" title="คลิกเพื่อฟังเสียงบรรยายขั้นตอน">
+                        <span>🔊</span>
+                        <span>ฟังเสียงบรรยาย</span>
+                      </button>
+                      <div class="bonus-step-indicator" id="bonus-step-badge">
+                        คำถามข้อที่ 1 / 2
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="bonus-q-title-wrap">
+                    <div class="bonus-question-text" id="bonus-q-text" style="font-size: 16px; margin-bottom: 4px;">
+                      🍳 ข้อที่ 1: ถ้าต้องการนำไข่ไปทำ <u>"ไข่ดาวเค็ม"</u> ควรหมักกี่วัน?
+                    </div>
+                    <div class="bonus-question-hint" id="bonus-q-hint" style="font-size: 13px; margin-bottom: 6px;">
+                      <span>💡</span>
+                      <span>เลือกระยะเวลาที่ไข่แดงเริ่มเยิ้มมันสวยงาม และไข่ขาวยังไม่เค็มเกินไป</span>
+                    </div>
+                    <div class="bonus-point-guide" style="font-size: 12px; padding: 3px 10px;">
+                      <span>👉 <b>ใช้นิ้วชี้ชี้ค้างไว้ 1 วินาที</b> ที่การ์ดคำตอบด้านล่าง (หรือคลิกเลือก)</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div class="bonus-mascot-strip">
-                <div class="bonus-mascot-avatar">🥚</div>
-                <div class="bonus-mascot-msg" id="bonus-mascot-text">
-                  ยินดีด้วยที่ผ่านครบทุกด่าน! มาทายกันว่าจำระยะเวลาการหมักไข่เค็มได้แม่นยำแค่ไหนนะจ๊ะ 🎉
+                <!-- Right: Wisdom Box -->
+                <div class="step-card-wisdom-col">
+                  <div class="step-wisdom-box-side">
+                    <span class="step-wisdom-icon">💡</span>
+                    <div><b>เกร็ดความรู้:</b> ${STAGE_STEP_DATA[7].wisdom}</div>
+                  </div>
                 </div>
-              </div>
-
-              <div class="bonus-q-title-wrap">
-                <div class="bonus-question-text" id="bonus-q-text">
-                  🍳 ข้อที่ 1: ถ้าต้องการนำไข่ไปทำ <u>"ไข่ดาวเค็ม"</u> ควรหมักกี่วัน?
-                </div>
-                <div class="bonus-question-hint" id="bonus-q-hint">
-                  <span>💡</span>
-                  <span>เลือกระยะเวลาที่ไข่แดงเริ่มเยิ้มมันสวยงาม และไข่ขาวยังไม่เค็มเกินไป</span>
-                </div>
-                <div class="bonus-point-guide">
-                  <span>👉 <b>ใช้นิ้วชี้ชี้ค้างไว้ 1 วินาที</b> ที่การ์ดคำตอบด้านล่าง (หรือคลิกเลือก)</span>
-                </div>
-              </div>
-
-              <div class="step-wisdom-box" style="margin-top: 10px;">
-                <span class="step-wisdom-icon">💡</span>
-                <div><b>เกร็ดความรู้:</b> ${STAGE_STEP_DATA[7].wisdom}</div>
               </div>
             </div>
 

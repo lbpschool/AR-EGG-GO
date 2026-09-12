@@ -1871,7 +1871,7 @@
       <p style="font-size: 16px; font-weight: 700; color: #059669; margin-bottom: 4px;">พร้อม ลุย ทำไข่เค็มดินสอพอง</p>
       <p class="modal-desc" style="font-size: 13px; margin-bottom: 14px;">
         เรียนรู้และฝึกปฏิบัติการทำไข่เค็มดินสอพองด้วยตนเองผ่านกิจกรรม 3D และ AR เสมือนจริง<br>
-        <span style="font-size: 11.5px; color: #64748b;">"จากภูมิปัญญา...สู่อนาคตที่ยั่งยืน" • โรงเรียนลำปางพาณิชยการและเทคโนโลยี</span>
+        <span style="font-size: 11.5px; color: #64748b;">"จากภูมิปัญญา...สู่อนาคตที่ยั่งยืน" • โรงเรียนลพบุรีปัญญานุกูล</span>
       </p>
 
       <!-- Welcome Audio Auto-play Indicator & Toggle Button -->
@@ -2004,7 +2004,7 @@
             <span>📖</span>
             <span>คู่มือขั้นตอนการทำไข่เค็มดินสอพอง</span>
           </h2>
-          <p class="modal-desc" style="margin: 3px 0 0; font-size: 12.5px;">7 ขั้นตอนมาตรฐานภูมิปัญญาท้องถิ่น โรงเรียนลำปางพาณิชยการและเทคโนโลยี</p>
+          <p class="modal-desc" style="margin: 3px 0 0; font-size: 12.5px;">7 ขั้นตอนมาตรฐานภูมิปัญญาท้องถิ่น โรงเรียนลพบุรีปัญญานุกูล</p>
         </div>
         <button id="btn-close-recipe-guide" class="icon-btn" style="width: 34px; height: 34px; font-size: 16px;">✕</button>
       </div>
@@ -4832,7 +4832,18 @@
       const stName = st.name || st.studentName || 'ไม่ระบุชื่อ';
       const stNo = st.no || st.studentNo || '-';
       const stClass = st.class || st.studentClass || '-';
-      const stDate = st.date || '-';
+      let rawDate = st.date || st.timestamp || '-';
+      let stDate = '-';
+      if (rawDate && rawDate !== '-') {
+        if (typeof rawDate === 'string') {
+          // แสดงเฉพาะวันที่ นำเวลาออกตามที่ต้องการ
+          stDate = rawDate.trim().split(/[\sT]+/)[0].replace(/,$/, '');
+        } else if (rawDate instanceof Date) {
+          stDate = rawDate.toLocaleDateString('th-TH');
+        } else {
+          stDate = String(rawDate);
+        }
+      }
       const stId = st.id || ('DOC-' + Math.floor(100000 + Math.random() * 900000));
       const stScore = parseInt(st.totalScore, 10) || 0;
       const stStars = parseInt(st.stars, 10) || 1;
@@ -4864,8 +4875,8 @@
             <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 6px;">
               <img src="assets/logo.jpg" alt="AR-EGG-GO" style="width: 58px; height: 58px; object-fit: contain; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);" onerror="this.src='logo.jpg'">
               <div style="text-align: center;">
-                <h2 style="margin: 0; font-size: 21px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">โรงเรียนลำปางพาณิชยการและเทคโนโลยี</h2>
-                <div style="font-size: 13px; color: #475569; font-weight: 600;">Lampang Commerce and Technology College</div>
+                <h2 style="margin: 0; font-size: 21px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">โรงเรียนลพบุรีปัญญานุกูล จังหวัดลพบุรี</h2>
+                <div style="font-size: 13px; color: #475569; font-weight: 600;">Lopburipanyanukul school</div>
               </div>
             </div>
             <div style="font-size: 16px; font-weight: 700; color: #0284c7; margin-top: 4px;">
@@ -4880,7 +4891,7 @@
           <div style="display: grid; grid-template-columns: 2.2fr 1fr; gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; font-size: 13px;">
             <div>
               <div><strong>ชื่อ-นามสกุล นักเรียน:</strong> <span style="font-size: 15px; color: #0f172a; font-weight: 700;">${stName}</span></div>
-              <div style="margin-top: 4px;"><strong>ระดับชั้น / แผนกวิชา:</strong> ${stClass} &nbsp;|&nbsp; <strong>เลขที่:</strong> ${stNo}</div>
+              <div style="margin-top: 4px;"><strong>ระดับชั้น:</strong> ${stClass} &nbsp;|&nbsp; <strong>เลขที่:</strong> ${stNo}</div>
             </div>
             <div style="text-align: right;">
               <div><strong>วันที่ประเมิน:</strong> ${stDate}</div>
@@ -5002,14 +5013,13 @@
             <div>
               <div style="margin-bottom: 30px;">ลงชื่อ..................................................................ครูผู้ประเมิน</div>
               <div>( .................................................................. )</div>
-              <div style="color: #64748b; font-size: 11px; margin-top: 2px;">ครูผู้สอน โรงเรียนลำปางพาณิชยการและเทคโนโลยี</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 2px;">ครูผู้สอน โรงเรียนลพบุรีปัญญานุกูล</div>
             </div>
           </div>
 
           <!-- Footer Footnote -->
-          <div style="margin-top: 18px; padding-top: 6px; border-top: 1px dashed #cbd5e1; font-size: 10px; color: #94a3b8; display: flex; justify-content: space-between;">
-            <span>สื่อการเรียนการสอนเสมือนจริง 3D AR • โรงเรียนลำปางพาณิชยการและเทคโนโลยี</span>
-            <span>วันที่พิมพ์: ${new Date().toLocaleDateString('th-TH')} ${new Date().toLocaleTimeString('th-TH')}</span>
+          <div style="margin-top: 18px; padding-top: 6px; border-top: 1px dashed #cbd5e1; font-size: 10px; color: #94a3b8; text-align: center;">
+            <span>สื่อการเรียนการสอนเสมือนจริง 3D AR • โรงเรียนลพบุรีปัญญานุกูล</span>
           </div>
         </div>
       `;

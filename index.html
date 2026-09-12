@@ -3097,6 +3097,7 @@
       // Main interactive egg (Stages 2, 4, 5, 6)
       eggMesh = createPhotoMesh('egg_good', 0.68, 0.85, { roughness: 0.45 });
       eggMesh.position.set(0, 0.55, 0);
+      eggMesh.visible = false;
       scene.add(eggMesh);
 
       // Stage 2: Clean Water Basin (Real Studio Photo)
@@ -3434,7 +3435,7 @@
       if (waterContainerMesh) waterContainerMesh.visible = false;
       if (s3ResetSprite) s3ResetSprite.visible = false;
       const floatingResetBtn = document.getElementById('btn-ar-floating-reset');
-      if (floatingResetBtn) floatingResetBtn.style.display = (stage === 3 ? 'flex' : 'none');
+      if (floatingResetBtn) floatingResetBtn.style.display = (stageNum === 3 ? 'flex' : 'none');
       if (huskTrayMesh) huskTrayMesh.visible = false;
       if (eggCartonMesh) eggCartonMesh.visible = false;
       if (eggMesh) {

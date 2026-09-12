@@ -86,40 +86,145 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 18px;
-      background: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 100%);
+      padding: 10px 18px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
       color: white;
+      position: relative;
+      z-index: 30;
+    }
+
+    .top-left-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 35;
     }
 
     .game-badge {
       display: flex;
       align-items: center;
-      gap: 10px;
-      background: rgba(255,255,255,0.2);
-      backdrop-filter: blur(8px);
-      padding: 6px 14px;
+      gap: 8px;
+      background: rgba(255,255,255,0.22);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 7px 16px;
       border-radius: 30px;
-      font-weight: 600;
+      font-weight: 700;
       font-size: 15px;
-      border: 1px solid rgba(255,255,255,0.3);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    /* Center Prominent Stage Step Banner */
+    .stage-center-wrapper {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 40;
+    }
+
+    .stage-center-banner {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      padding: 8px 24px;
+      border-radius: 40px;
+      border: 2px solid rgba(255, 255, 255, 0.98);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.22), 0 2px 6px rgba(0, 0, 0, 0.08);
+      pointer-events: auto;
+      transition: all 0.3s ease;
+      animation: floatBanner 4s ease-in-out infinite alternate;
+    }
+
+    @keyframes floatBanner {
+      0% { transform: translateY(0px); }
+      100% { transform: translateY(-3px); }
+    }
+
+    .stage-banner-icon {
+      font-size: 26px;
+      line-height: 1;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.18));
+    }
+
+    .stage-banner-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      font-family: 'Prompt', sans-serif;
+      text-shadow: 0 1px 1px rgba(255,255,255,0.8);
+    }
+
+    /* Attached Speaker Button */
+    .stage-speech-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1.5px solid #86efac;
+      background: #f0fdf4;
+      color: #16a34a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(22, 163, 74, 0.25);
+      transition: all 0.2s ease;
+      padding: 0;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .stage-speech-btn:hover {
+      background: #dcfce7;
+      transform: scale(1.1);
+      box-shadow: 0 4px 14px rgba(22, 163, 74, 0.4);
+    }
+
+    .stage-speech-btn:active {
+      transform: scale(0.92);
+    }
+
+    .stage-speech-btn.is-playing {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #dc2626;
+      animation: pulsePlay 1.2s infinite;
+    }
+
+    @keyframes pulsePlay {
+      0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); }
+      70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
     }
 
     .top-controls {
       display: flex;
       gap: 8px;
+      z-index: 35;
     }
 
     .icon-btn {
       width: 44px;
       height: 44px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.92);
       border: none;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 20px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
       cursor: pointer;
       transition: all 0.2s;
     }
@@ -127,37 +232,81 @@
       transform: scale(0.92);
     }
 
+    /* Minimal Floating Interactive HUD */
     .top-mission-panel {
-      padding: 4px 18px 6px;
+      padding: 4px 18px;
       display: flex;
       justify-content: center;
       width: 100%;
       pointer-events: none;
       animation: slideDown 0.35s ease-out;
+      margin-top: 4px;
+      z-index: 25;
     }
 
     .action-card {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      width: 95%;
-      max-width: 860px;
-      padding: 8px 16px;
-      border-radius: var(--border-radius);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-      border: 1.5px solid rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      width: auto;
+      min-width: 320px;
+      max-width: 720px;
+      padding: 8px 20px;
+      border-radius: 24px;
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.14);
+      border: 1.5px solid rgba(255, 255, 255, 0.92);
       text-align: center;
       pointer-events: auto;
       transition: all 0.25s ease;
+      margin: 0 auto;
     }
 
-    .mascot-container {
-      margin: 2px 18px 6px;
+    .stage-minimal-hud {
+      width: 100%;
       display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      animation: slideDown 0.4s ease-out;
-      pointer-events: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    /* Mascot Container: Completely Hidden per Request */
+    .mascot-container {
+      display: none !important;
+    }
+
+    /* Responsive adjustments for mobile screens */
+    @media (max-width: 860px) {
+      .top-bar {
+        flex-wrap: wrap;
+        row-gap: 8px;
+        padding: 8px 12px;
+      }
+      .stage-center-wrapper {
+        position: static;
+        transform: none;
+        order: 3;
+        width: 100%;
+        margin-top: 2px;
+      }
+      .stage-center-banner {
+        padding: 6px 18px;
+        gap: 8px;
+      }
+      .stage-banner-icon {
+        font-size: 22px;
+      }
+      .stage-banner-title {
+        font-size: 15px;
+      }
+      .stage-speech-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+      }
+      .action-card {
+        padding: 6px 14px;
+        min-width: 290px;
+      }
     }
 
     @keyframes slideDown {
@@ -1622,16 +1771,27 @@
     
     <!-- Top Information Bar -->
     <div class="top-bar interactive">
-      <div class="game-badge">
-        <span id="stage-badge-icon">🥚</span>
-        <span id="stage-badge-text">ขั้นตอนที่ 1 การคัดเลือกไข่เป็ด</span>
-      </div>
-
-      <div class="top-controls">
+      <!-- Left: Score Badge -->
+      <div class="top-left-group">
         <div class="game-badge" style="background: rgba(245, 158, 11, 0.25); border-color: #f59e0b;">
           <span>⭐</span>
           <span id="score-display">0 / 100</span>
         </div>
+      </div>
+
+      <!-- Center: Large Prominent Stage Step Banner with Attached Speaker Button -->
+      <div class="stage-center-wrapper">
+        <div class="stage-center-banner" id="stage-center-banner">
+          <span class="stage-banner-icon" id="stage-badge-icon">🥚</span>
+          <span class="stage-banner-title" id="stage-badge-text">ขั้นตอนที่ 1 การคัดเลือกไข่เป็ด</span>
+          <button type="button" class="stage-speech-btn" id="btn-stage-speech" onclick="Narrator.toggle(GAME_STATE.stage, STAGE_STEP_DATA[GAME_STATE.stage] ? STAGE_STEP_DATA[GAME_STATE.stage].speechText : '', this)" title="คลิกเพื่อฟังเสียงบรรยายขั้นตอน">
+            <span class="speech-icon">🔊</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: Utility Control Buttons -->
+      <div class="top-controls">
         <button id="btn-audio-toggle" class="icon-btn" title="เปิด/ปิดเสียง">🔊</button>
         <button id="btn-mode-toggle" class="icon-btn" title="เปิด/ปิดกล้องหน้าและระบบตรวจจับมือ (AR)">📹</button>
         <button id="btn-recipe-guide" class="icon-btn" style="background: #ecfdf5; color: #047857; border: 1.5px solid #a7f3d0;" title="เปิดดูคู่มือขั้นตอนการทำไข่เค็ม">📖</button>
@@ -2452,38 +2612,9 @@
     };
 
     function renderStepCardHTML(stageNum, interactionHTML) {
-      const step = STAGE_STEP_DATA[stageNum];
-      if (!step) return interactionHTML;
-
       return `
-        <div class="step-card-grid">
-          <!-- Left Column: Title, Speech Button, How-To, and Stage Controls -->
-          <div class="step-card-main-col">
-            <div class="step-guide-header">
-              <div class="step-guide-title">
-                <span style="font-size: 17px;">${step.icon}</span>
-                <span>${step.title}</span>
-              </div>
-              <button type="button" class="btn-speech-trigger" id="btn-speech-stage-${stageNum}" onclick="Narrator.toggle(${stageNum}, STAGE_STEP_DATA[${stageNum}].speechText, this)" title="คลิกเพื่อฟังเสียงบรรยายขั้นตอน">
-                <span>🔊</span>
-                <span>ฟังเสียงบรรยาย</span>
-              </button>
-            </div>
-            <div class="step-guide-howto">
-              <b>วิธีปฏิบัติ:</b> ${step.howTo}
-            </div>
-            <div class="step-guide-interaction">
-              ${interactionHTML}
-            </div>
-          </div>
-
-          <!-- Right Column: Wisdom Box on the right side to prevent blocking 3D view -->
-          <div class="step-card-wisdom-col">
-            <div class="step-wisdom-box-side">
-              <span class="step-wisdom-icon">💡</span>
-              <div><b>เกร็ดความรู้/ข้อควรระวัง:</b> ${step.wisdom}</div>
-            </div>
-          </div>
+        <div class="stage-minimal-hud">
+          ${interactionHTML}
         </div>
       `;
     }
@@ -3123,6 +3254,10 @@
       isEggGrabbed = false;
       isPointerDragging = false;
       const badgeText = document.getElementById('stage-badge-text');
+      const badgeIcon = document.getElementById('stage-badge-icon');
+      if (badgeIcon && STAGE_STEP_DATA[stageNum]) {
+        badgeIcon.textContent = STAGE_STEP_DATA[stageNum].icon;
+      }
       const actionCard = document.getElementById('dynamic-action-card');
       if (actionCard) {
         actionCard.className = 'action-card';
@@ -3426,48 +3561,23 @@
           if (currentBonusBackdrop) currentBonusBackdrop.style.display = 'block';
 
           actionCard.innerHTML = `
-            <!-- Top Standalone Question Card with Side-by-Side Wisdom Box -->
-            <div class="bonus-question-card" style="padding: 16px 22px;">
-              <div class="step-card-grid">
-                <!-- Left: Question Header & Details -->
-                <div class="step-card-main-col">
-                  <div class="bonus-quiz-header" style="margin-bottom: 6px; padding-bottom: 6px;">
-                    <div class="bonus-badge-title">
-                      <span>⏱️</span>
-                      <span>ขั้นตอนที่ 7 : ระยะเวลาการหมักไข่</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <button type="button" class="btn-speech-trigger" id="btn-speech-stage-7" onclick="Narrator.toggle(7, STAGE_STEP_DATA[7].speechText, this)" title="คลิกเพื่อฟังเสียงบรรยายขั้นตอน">
-                        <span>🔊</span>
-                        <span>ฟังเสียงบรรยาย</span>
-                      </button>
-                      <div class="bonus-step-indicator" id="bonus-step-badge">
-                        คำถามข้อที่ 1 / 2
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="bonus-q-title-wrap">
-                    <div class="bonus-question-text" id="bonus-q-text" style="font-size: 16px; margin-bottom: 4px;">
-                      🍳 ข้อที่ 1: ถ้าต้องการนำไข่ไปทำ <u>"ไข่ดาวเค็ม"</u> ควรหมักกี่วัน?
-                    </div>
-                    <div class="bonus-question-hint" id="bonus-q-hint" style="font-size: 13px; margin-bottom: 6px;">
-                      <span>💡</span>
-                      <span>เลือกระยะเวลาที่ไข่แดงเริ่มเยิ้มมันสวยงาม และไข่ขาวยังไม่เค็มเกินไป</span>
-                    </div>
-                    <div class="bonus-point-guide" style="font-size: 12px; padding: 3px 10px;">
-                      <span>👉 <b>ใช้นิ้วชี้ชี้ค้างไว้ 1 วินาที</b> ที่การ์ดคำตอบด้านล่าง (หรือคลิกเลือก)</span>
-                    </div>
-                  </div>
+            <!-- Streamlined Question Card (Minimal HUD) -->
+            <div class="bonus-question-card" style="padding: 12px 20px; text-align: center;">
+              <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <div class="bonus-step-indicator" id="bonus-step-badge">
+                  คำถามข้อที่ 1 / 2
                 </div>
+              </div>
 
-                <!-- Right: Wisdom Box -->
-                <div class="step-card-wisdom-col">
-                  <div class="step-wisdom-box-side">
-                    <span class="step-wisdom-icon">💡</span>
-                    <div><b>เกร็ดความรู้:</b> ${STAGE_STEP_DATA[7].wisdom}</div>
-                  </div>
-                </div>
+              <div class="bonus-question-text" id="bonus-q-text" style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+                🍳 ข้อที่ 1: ถ้าต้องการนำไข่ไปทำ <u>"ไข่ดาวเค็ม"</u> ควรหมักกี่วัน?
+              </div>
+              <div class="bonus-question-hint" id="bonus-q-hint" style="font-size: 13px; color: #64748b; margin-bottom: 6px;">
+                <span>💡</span>
+                <span>เลือกระยะเวลาที่ไข่แดงเริ่มเยิ้มมันสวยงาม และไข่ขาวยังไม่เค็มเกินไป</span>
+              </div>
+              <div class="bonus-point-guide" style="font-size: 12px; padding: 3px 12px; display: inline-block;">
+                <span>👉 <b>ใช้นิ้วชี้ชี้ค้างไว้ 1 วินาที</b> ที่การ์ดคำตอบด้านล่าง (หรือคลิกเลือก)</span>
               </div>
             </div>
 
@@ -3547,7 +3657,7 @@
 
       if (!sound.isMuted && typeof Narrator !== 'undefined' && STAGE_STEP_DATA[stageNum]) {
         setTimeout(() => {
-          const btn = document.getElementById(`btn-speech-stage-${stageNum}`);
+          const btn = document.getElementById('btn-stage-speech');
           Narrator.playStep(stageNum, btn);
         }, 400);
       }

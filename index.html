@@ -1283,17 +1283,17 @@
 
     /* Top Standalone Question Card */
     .bonus-question-card {
-      width: 94%;
-      max-width: 1020px;
-      background: rgba(255, 255, 255, 0.88);
+      width: 95%;
+      max-width: 1120px;
+      background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(28px) saturate(190%);
       -webkit-backdrop-filter: blur(28px) saturate(190%);
-      border: 2px solid rgba(255, 255, 255, 0.95);
-      border-radius: 26px;
-      padding: 22px 30px;
+      border: 2.5px solid rgba(255, 255, 255, 0.95);
+      border-radius: 28px;
+      padding: 22px 36px;
       box-shadow: 0 16px 36px rgba(15, 23, 42, 0.28), inset 0 2px 4px rgba(255, 255, 255, 0.95);
       pointer-events: auto;
-      text-align: left;
+      text-align: center;
       animation: slideDownGlass 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
     @keyframes slideDownGlass {
@@ -1313,23 +1313,24 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 800;
       color: #b45309;
       background: linear-gradient(135deg, #fef3c7, #fde68a);
-      padding: 6px 14px;
+      padding: 6px 16px;
       border-radius: 999px;
       border: 1px solid #fcd34d;
       box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
     }
     .bonus-step-indicator {
-      font-size: 13px;
-      font-weight: 700;
-      color: #475569;
-      background: rgba(241, 245, 249, 0.9);
-      padding: 5px 12px;
+      font-size: 16.5px;
+      font-weight: 800;
+      color: #334155;
+      background: rgba(241, 245, 249, 0.95);
+      padding: 6px 18px;
       border-radius: 999px;
-      border: 1px solid rgba(203, 213, 225, 0.85);
+      border: 1.5px solid rgba(203, 213, 225, 0.9);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
 
     .bonus-mascot-strip {
@@ -1357,7 +1358,7 @@
       box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25);
     }
     .bonus-mascot-msg {
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 600;
       color: #78350f;
       line-height: 1.4;
@@ -1365,32 +1366,36 @@
     }
 
     .bonus-question-text {
-      font-size: 21px;
-      font-weight: 800;
-      color: #0f172a;
-      line-height: 1.4;
-      margin-bottom: 6px;
+      font-size: 28px !important;
+      font-weight: 800 !important;
+      color: #0f172a !important;
+      line-height: 1.45 !important;
+      margin: 8px 0 8px !important;
+      letter-spacing: -0.3px;
     }
     .bonus-question-hint {
-      font-size: 14px;
-      color: #64748b;
-      margin-bottom: 10px;
+      font-size: 18.5px !important;
+      font-weight: 600 !important;
+      color: #475569 !important;
+      margin-bottom: 12px !important;
       display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      gap: 8px;
     }
     .bonus-point-guide {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      font-weight: 700;
-      color: #065f46;
-      background: rgba(209, 250, 229, 0.88);
-      padding: 5px 14px;
-      border-radius: 20px;
-      border: 1px solid #a7f3d0;
-      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15);
+      justify-content: center;
+      gap: 8px;
+      font-size: 16px !important;
+      font-weight: 700 !important;
+      color: #065f46 !important;
+      background: rgba(209, 250, 229, 0.92) !important;
+      padding: 7px 20px !important;
+      border-radius: 24px !important;
+      border: 1.5px solid #a7f3d0 !important;
+      box-shadow: 0 3px 8px rgba(16, 185, 129, 0.18) !important;
     }
 
     /* 3 Standalone Floating Answer Cards Grid (Option 1) */
@@ -1413,56 +1418,58 @@
       flex-direction: column;
       align-items: center;
       text-align: center;
-      padding: 26px 20px 24px;
-      border-radius: 24px;
+      padding: 28px 22px 26px;
+      border-radius: 26px;
       cursor: pointer;
       pointer-events: auto;
-      border: 2px solid transparent;
+      border: 2.5px solid transparent;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
       font-family: inherit;
       transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
     }
 
     .standalone-badge {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 800;
-      font-size: 18px;
+      font-weight: 900;
+      font-size: 24px;
       margin-bottom: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
       transition: transform 0.25s ease;
     }
     .standalone-title {
-      font-size: 21px;
-      font-weight: 800;
-      line-height: 1.3;
-      margin-bottom: 6px;
+      font-size: 30px !important;
+      font-weight: 900 !important;
+      line-height: 1.25 !important;
+      margin-bottom: 8px !important;
+      letter-spacing: -0.5px;
     }
     .standalone-desc {
-      font-size: 13px;
-      font-weight: 600;
-      line-height: 1.4;
-      opacity: 0.88;
-      min-height: 38px;
+      font-size: 16.5px !important;
+      font-weight: 600 !important;
+      line-height: 1.5 !important;
+      opacity: 0.95 !important;
+      min-height: 50px;
       margin-bottom: 14px;
     }
     .standalone-action {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 4px 12px;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.6);
-      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.9);
+      gap: 8px;
+      font-size: 15px !important;
+      font-weight: 700 !important;
+      padding: 6px 16px !important;
+      border-radius: 20px !important;
+      background: rgba(255, 255, 255, 0.75) !important;
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.9), 0 2px 6px rgba(0,0,0,0.08) !important;
       transition: all 0.2s ease;
     }
 
@@ -3731,21 +3738,21 @@
 
           actionCard.innerHTML = `
             <!-- Streamlined Question Card (Minimal HUD) -->
-            <div class="bonus-question-card" style="padding: 12px 20px; text-align: center;">
-              <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 6px;">
+            <div class="bonus-question-card">
+              <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 8px;">
                 <div class="bonus-step-indicator" id="bonus-step-badge">
                   คำถามข้อที่ 1 / 2
                 </div>
               </div>
 
-              <div class="bonus-question-text" id="bonus-q-text" style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+              <div class="bonus-question-text" id="bonus-q-text">
                 🍳 ข้อที่ 1: ถ้าต้องการนำไข่ไปทำ <u>"ไข่ดาวเค็ม"</u> ควรหมักกี่วัน?
               </div>
-              <div class="bonus-question-hint" id="bonus-q-hint" style="font-size: 13px; color: #64748b; margin-bottom: 6px;">
+              <div class="bonus-question-hint" id="bonus-q-hint">
                 <span>💡</span>
                 <span>เลือกระยะเวลาที่ไข่แดงเริ่มเยิ้มมันสวยงาม และไข่ขาวยังไม่เค็มเกินไป</span>
               </div>
-              <div class="bonus-point-guide" style="font-size: 12px; padding: 3px 12px; display: inline-block;">
+              <div class="bonus-point-guide">
                 <span>👉 <b>ใช้นิ้วชี้ชี้ค้างไว้ 1 วินาที</b> ที่การ์ดคำตอบด้านล่าง (หรือคลิกเลือก)</span>
               </div>
             </div>

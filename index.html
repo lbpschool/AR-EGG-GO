@@ -3611,10 +3611,15 @@
         if (GAME_STATE.currentStage === 2) {
           eggMesh.rotation.x = 0;
           eggMesh.rotation.y = 0;
-        } else if (GAME_STATE.currentStage === 4) {
+        } else if (GAME_STATE.currentStage === 4 || GAME_STATE.currentStage === 5) {
           if (!isEggGrabbed) {
+            eggMesh.position.x += (0.55 - eggMesh.position.x) * 0.18;
+            eggMesh.position.z += (0.05 - eggMesh.position.z) * 0.18;
+            const targetY = 0.50 + Math.sin(Date.now() * 0.003) * 0.03;
+            eggMesh.position.y += (targetY - eggMesh.position.y) * 0.18;
             eggMesh.quaternion.copy(camera.quaternion);
-            eggMesh.position.y = 0.50 + Math.sin(Date.now() * 0.003) * 0.03;
+            if (Math.abs(eggMesh.position.x - 0.55) < 0.005) eggMesh.position.x = 0.55;
+            if (Math.abs(eggMesh.position.z - 0.05) < 0.005) eggMesh.position.z = 0.05;
           }
         }
       }
@@ -4706,19 +4711,32 @@
 
       if (eggMesh) {
         eggMesh.rotation.z -= 0.35;
-        if (GAME_STATE.stage5.huskPercent >= 40 && realTextures['egg_husk']) {
+        if (GAME_STATE.stage5.huskPercent >= 100 && realTextures['egg_husk']) {
           eggMesh.material.map = realTextures['egg_husk'];
+          if (realTextures['egg_husk'].image) realTextures['egg_husk'].needsUpdate = true;
+          eggMesh.material.color.setHex(0xffffff);
           eggMesh.material.needsUpdate = true;
+        } else if (GAME_STATE.stage5.huskPercent >= 40 && realTextures['egg_husk']) {
+          eggMesh.material.map = realTextures['egg_husk'];
+          if (realTextures['egg_husk'].image) realTextures['egg_husk'].needsUpdate = true;
           const factor = 0.5 + (1 - GAME_STATE.stage5.huskPercent / 100) * 0.5;
           eggMesh.material.color.setRGB(factor, factor, factor);
+          eggMesh.material.needsUpdate = true;
         } else {
           const factor = 1 - (GAME_STATE.stage5.huskPercent / 100) * 0.6;
           eggMesh.material.color.setRGB(factor, factor, factor);
+          eggMesh.material.needsUpdate = true;
         }
       }
 
       if (GAME_STATE.stage5.huskPercent >= 100 && !GAME_STATE.stage5.done) {
         GAME_STATE.stage5.done = true;
+        if (eggMesh && realTextures['egg_husk']) {
+          eggMesh.material.map = realTextures['egg_husk'];
+          if (realTextures['egg_husk'].image) realTextures['egg_husk'].needsUpdate = true;
+          eggMesh.material.color.setHex(0xffffff);
+          eggMesh.material.needsUpdate = true;
+        }
         sound.playTriumph();
         confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
         showToast('🌾 แกลบดำเคลือบติดทั่วไข่ครบ 100%! (ไปด่านต่อไปใน 3 วินาที)', 3000);
@@ -6133,7 +6151,15 @@
           eggMesh.position.set(0.55, 0.50, 0.05);
           eggMesh.quaternion.copy(camera.quaternion);
         } else if (stage === 5) {
-          eggMesh.position.y = 0.35;
+          eggMesh.scale.set(1.0, 1.0, 1.0);
+          eggMesh.rotation.set(0, 0, 0);
+          eggMesh.quaternion.copy(camera.quaternion);
+          // Return egg smoothly to initial position (0.55, 0.50, 0.05) on hand unpinch
+          setTimeout(() => {
+            if (GAME_STATE.currentStage === 5 && !isEggGrabbed && eggMesh) {
+              eggMesh.position.set(0.55, 0.50, 0.05);
+            }
+          }, 450);
         } else if (stage === 6) {
           const distToCarton = Math.hypot(eggMesh.position.x - (-0.70), eggMesh.position.z - 0.05);
           if (distToCarton < 0.80 || eggMesh.position.x < 0.10) {
